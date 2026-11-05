@@ -1,16 +1,40 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# Proyecto Tiempos Maxim
 
-# This is NOT the Next.js you know
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`; the Next.js app is still the untouched `create-next-app` starter and has not implemented them yet.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+## Layout
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+- `maxim-tiempos/` — Next.js 16.3.4 App Router app (React 19, TypeScript, Tailwind v4). This is the git repo; the parent folder is not.
+- `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
 
-<!-- END:nextjs-agent-rules -->
+Run all commands from `maxim-tiempos/`.
 
-## Project guidance
+## Commands
 
-See `../AGENTS.md` for layout, commands, Next.js 16 quirks, and domain rules. All commands run from this directory.
+- `npm run dev` — dev server on :3000. It rewrites the `nextjs-agent-rules` block in `maxim-tiempos/AGENTS.md`; keep that block.
+- `npm run lint` — runs `eslint` directly (Next 16 removed `next lint`).
+- `npx tsc --noEmit` — typecheck; there is no `typecheck` script.
+- `npm run build` / `npm start`.
+- No test suite, CI, or formatter is configured. Do not invent test commands.
+
+## Next.js 16 quirks
+
+- Read `maxim-tiempos/node_modules/next/dist/docs/` before writing Next code; this version differs from training data.
+- Route props use generated global types such as `LayoutProps<"/">`, not hand-written prop interfaces.
+- Tailwind v4: no `tailwind.config`; design tokens live in `app/globals.css` under `@theme inline`.
+- `@/*` maps to the `maxim-tiempos` root (there is no `src/` directory).
+
+## Domain rules from the prototypes
+
+- UI copy is Spanish (`lang="es"`); keep it that way.
+- Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
+- `observaciones` (max 300) is required for `base` and `pozo`, optional for `descanso` and `licencia`.
+- Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
+- Employee code: exactly 5 chars, uppercase letters and digits, must contain both; password min 8 chars.
+- Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
+
+The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; there is no backend or persistence yet.
+
 
 ## MCPs
 
@@ -31,3 +55,4 @@ framework.
 ## Reglas de código
 
 - Usar código limpio, nombres, funciones y variables en inglés
+
