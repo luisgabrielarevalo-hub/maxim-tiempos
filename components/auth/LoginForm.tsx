@@ -167,6 +167,7 @@ export default function LoginForm() {
 
       {notice ? (
         <p
+          role="status"
           className={`mt-4 rounded-md border px-4 py-3.5 text-sm font-semibold ${
             notice.variant === "ok"
               ? "border-status-descanso/40 text-status-descanso"
