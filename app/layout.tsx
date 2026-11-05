@@ -21,9 +21,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Reporte diario de campo | Bitácora de personal",
-  description:
-    "Plantilla para reportar la jornada del día: en base, en pozo, en descanso o en licencia. Si fue en pozo, se piden el pozo y la actividad realizada.",
+  title: {
+    default: "Bitácora de personal",
+    template: "%s | Bitácora de personal",
+  },
+  description: "Bitácora de personal para el reporte diario de jornadas en campo.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
