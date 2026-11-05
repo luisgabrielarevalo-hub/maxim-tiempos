@@ -1,15 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTodayLocal } from "@/lib/report";
+import {
+  getTodayLocal,
+  type DayStatus,
+  type ReportErrors,
+  type ReportField,
+  type ReportFormValues,
+} from "@/lib/report";
 import { CalendarIcon } from "./icons";
+import ReportForm from "./ReportForm";
+
+const EMPTY_VALUES: ReportFormValues = {
+  date: "",
+  status: "",
+  well: "",
+  activity: "",
+  notes: "",
+};
 
 export default function DailyReportPage() {
   const [today, setToday] = useState<string | null>(null);
+  const [values, setValues] = useState<ReportFormValues>(EMPTY_VALUES);
+  const [errors, setErrors] = useState<ReportErrors>({});
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    setToday(getTodayLocal());
+    const todayLocal = getTodayLocal();
+    setToday(todayLocal);
+    setValues((current) => ({ ...current, date: todayLocal }));
   }, []);
+
+  function handleChange(field: ReportField, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setShowSuccess(false);
+  }
+
+  function handleStatusChange(status: DayStatus) {
+    setValues((current) => ({
+      ...current,
+      status,
+      well: status === "pozo" ? current.well : "",
+      activity: status === "pozo" ? current.activity : "",
+    }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next.status;
+      delete next.well;
+      delete next.activity;
+      return next;
+    });
+    setShowSuccess(false);
+  }
+
+  function handleClear() {
+    setValues({ ...EMPTY_VALUES, date: today ?? getTodayLocal() });
+    setErrors({});
+    setShowSuccess(false);
+  }
 
   return (
     <>
@@ -36,23 +90,20 @@ export default function DailyReportPage() {
       </header>
 
       <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
-        <section
-          aria-label="Formulario del reporte"
-          className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]"
-        >
+        <section aria-label="Formulario del reporte" className="min-w-0">
           {today ? (
-            <div className="p-6">
-              <div className="h-4 w-32 rounded bg-muted" />
-              <div className="mt-6 h-10 w-full max-w-xs rounded bg-muted" />
-              <div className="mt-10 h-4 w-48 rounded bg-muted" />
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="h-24 rounded bg-muted" />
-                <div className="h-24 rounded bg-muted" />
-                <div className="h-24 rounded bg-muted" />
-                <div className="h-24 rounded bg-muted" />
-              </div>
-            </div>
-          ) : null}
+            <ReportForm
+              values={values}
+              errors={errors}
+              today={today}
+              showSuccess={showSuccess}
+              onChange={handleChange}
+              onStatusChange={handleStatusChange}
+              onClear={handleClear}
+            />
+          ) : (
+            <div className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]" />
+          )}
         </section>
 
         <aside
