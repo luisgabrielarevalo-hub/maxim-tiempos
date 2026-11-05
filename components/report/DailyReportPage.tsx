@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   getTodayLocal,
   parseLocalDate,
@@ -24,23 +24,68 @@ const EMPTY_VALUES: ReportFormValues = {
   notes: "",
 };
 
+const emptySubscribe = () => () => {};
+
+function useTodayLocal(): string | null {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => getTodayLocal(),
+    () => null,
+  );
+}
+
 export default function DailyReportPage() {
-  const [today, setToday] = useState<string | null>(null);
-  const [values, setValues] = useState<ReportFormValues>(EMPTY_VALUES);
+  const today = useTodayLocal();
+
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className="h-2.5 bg-[repeating-linear-gradient(135deg,var(--status-pozo)_0_12px,transparent_12px_24px)]"
+      />
+
+      <header className="bg-primary text-primary-foreground">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-4 px-4 py-8">
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.24em] uppercase opacity-70">
+              Bitácora de personal
+            </p>
+            <h1 className="mt-1.5 font-display text-[clamp(44px,8vw,60px)] leading-[0.9] font-normal tracking-[0.02em]">
+              Reporte diario de campo
+            </h1>
+          </div>
+          <p className="max-w-xs text-[13px] leading-[1.4] opacity-75">
+            Selecciona dónde estuvo la persona ese día. Si trabajó en pozo, la plantilla pide cuál
+            fue y qué actividad hizo.
+          </p>
+        </div>
+      </header>
+
+      {today ? <ReportWorkspace today={today} /> : <WorkspaceSkeleton />}
+    </>
+  );
+}
+
+function WorkspaceSkeleton() {
+  return (
+    <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
+      <div className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]" />
+      <div className="min-h-[420px]" />
+    </main>
+  );
+}
+
+function ReportWorkspace({ today }: { today: string }) {
+  const todayDate = parseLocalDate(today);
+  const [values, setValues] = useState<ReportFormValues>({ ...EMPTY_VALUES, date: today });
   const [errors, setErrors] = useState<ReportErrors>({});
   const [reports, setReports] = useState<DailyReport[]>([]);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [visibleMonth, setVisibleMonth] = useState<{ year: number; monthIndex: number } | null>(null);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [visibleMonth, setVisibleMonth] = useState({
+    year: todayDate.getFullYear(),
+    monthIndex: todayDate.getMonth(),
+  });
   const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    const todayLocal = getTodayLocal();
-    const todayDate = parseLocalDate(todayLocal);
-    setToday(todayLocal);
-    setValues((current) => ({ ...current, date: todayLocal }));
-    setSelectedDate(todayLocal);
-    setVisibleMonth({ year: todayDate.getFullYear(), monthIndex: todayDate.getMonth() });
-  }, []);
 
   function handleChange(field: ReportField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -72,8 +117,6 @@ export default function DailyReportPage() {
   }
 
   function handleSubmit(): ReportErrors {
-    if (!today) return {};
-
     const nextErrors = validateReport(values, today);
     setErrors(nextErrors);
 
@@ -109,118 +152,74 @@ export default function DailyReportPage() {
   }
 
   function handlePreviousMonth() {
-    setVisibleMonth((current) =>
-      current
-        ? {
-            year: current.monthIndex === 0 ? current.year - 1 : current.year,
-            monthIndex: (current.monthIndex + 11) % 12,
-          }
-        : current,
-    );
+    setVisibleMonth((current) => ({
+      year: current.monthIndex === 0 ? current.year - 1 : current.year,
+      monthIndex: (current.monthIndex + 11) % 12,
+    }));
   }
 
   function handleNextMonth() {
-    setVisibleMonth((current) =>
-      current
-        ? {
-            year: current.monthIndex === 11 ? current.year + 1 : current.year,
-            monthIndex: (current.monthIndex + 1) % 12,
-          }
-        : current,
-    );
+    setVisibleMonth((current) => ({
+      year: current.monthIndex === 11 ? current.year + 1 : current.year,
+      monthIndex: (current.monthIndex + 1) % 12,
+    }));
   }
 
   function handleToday() {
-    const todayLocal = today ?? getTodayLocal();
-    const parsed = parseLocalDate(todayLocal);
-    setSelectedDate(todayLocal);
-    setVisibleMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
+    setSelectedDate(today);
+    setVisibleMonth({ year: todayDate.getFullYear(), monthIndex: todayDate.getMonth() });
     setShowSuccess(false);
   }
 
   function handleClear() {
-    setValues({ ...EMPTY_VALUES, date: today ?? getTodayLocal() });
+    setValues({ ...EMPTY_VALUES, date: today });
     setErrors({});
     setShowSuccess(false);
   }
 
   return (
-    <>
-      <div
-        aria-hidden="true"
-        className="h-2.5 bg-[repeating-linear-gradient(135deg,var(--status-pozo)_0_12px,transparent_12px_24px)]"
-      />
+    <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
+      <section aria-label="Formulario del reporte" className="min-w-0">
+        <ReportForm
+          values={values}
+          errors={errors}
+          today={today}
+          showSuccess={showSuccess}
+          onChange={handleChange}
+          onStatusChange={handleStatusChange}
+          onSubmit={handleSubmit}
+          onClear={handleClear}
+        />
+      </section>
 
-      <header className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-end justify-between gap-x-8 gap-y-4 px-4 py-8">
+      <aside
+        aria-label="Histórico de reportes"
+        className="min-w-0 min-[960px]:sticky min-[960px]:top-6 min-[960px]:self-start"
+      >
+        <header className="flex items-center justify-between gap-3 border-b border-border pb-5">
           <div>
-            <p className="font-mono text-[11px] tracking-[0.24em] uppercase opacity-70">
-              Bitácora de personal
+            <p className="mb-2 font-mono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
+              Bitácora de jornadas
             </p>
-            <h1 className="mt-1.5 font-display text-[clamp(44px,8vw,60px)] leading-[0.9] font-normal tracking-[0.02em]">
-              Reporte diario de campo
-            </h1>
+            <h2 className="font-display text-3xl leading-none font-normal">Histórico de reportes</h2>
           </div>
-          <p className="max-w-xs text-[13px] leading-[1.4] opacity-75">
-            Selecciona dónde estuvo la persona ese día. Si trabajó en pozo, la plantilla pide cuál
-            fue y qué actividad hizo.
-          </p>
+          <CalendarIcon className="size-6 text-muted-foreground" />
+        </header>
+
+        <div className="pt-5">
+          <ReportCalendar
+            reports={reports}
+            selectedDate={selectedDate}
+            today={today}
+            visibleMonth={visibleMonth}
+            onSelectDate={handleSelectDate}
+            onPreviousMonth={handlePreviousMonth}
+            onNextMonth={handleNextMonth}
+            onToday={handleToday}
+          />
+          <ReportHistory reports={reports} selectedDate={selectedDate} />
         </div>
-      </header>
-
-      <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
-        <section aria-label="Formulario del reporte" className="min-w-0">
-          {today ? (
-            <ReportForm
-              values={values}
-              errors={errors}
-              today={today}
-              showSuccess={showSuccess}
-              onChange={handleChange}
-              onStatusChange={handleStatusChange}
-              onSubmit={handleSubmit}
-              onClear={handleClear}
-            />
-          ) : (
-            <div className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]" />
-          )}
-        </section>
-
-        <aside
-          aria-label="Histórico de reportes"
-          className="min-w-0 min-[960px]:sticky min-[960px]:top-6 min-[960px]:self-start"
-        >
-          <header className="flex items-center justify-between gap-3 border-b border-border pb-5">
-            <div>
-              <p className="mb-2 font-mono text-[11px] tracking-[0.24em] text-muted-foreground uppercase">
-                Bitácora de jornadas
-              </p>
-              <h2 className="font-display text-3xl leading-none font-normal">
-                Histórico de reportes
-              </h2>
-            </div>
-            <CalendarIcon className="size-6 text-muted-foreground" />
-          </header>
-
-          <div className="pt-5">
-            {today && visibleMonth ? (
-              <>
-                <ReportCalendar
-                  reports={reports}
-                  selectedDate={selectedDate}
-                  today={today}
-                  visibleMonth={visibleMonth}
-                  onSelectDate={handleSelectDate}
-                  onPreviousMonth={handlePreviousMonth}
-                  onNextMonth={handleNextMonth}
-                  onToday={handleToday}
-                />
-                <ReportHistory reports={reports} selectedDate={selectedDate} />
-              </>
-            ) : null}
-          </div>
-        </aside>
-      </main>
-    </>
+      </aside>
+    </main>
   );
 }
