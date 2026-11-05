@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
-import { validateLogin, type LoginErrors } from "@/lib/auth";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { authenticate, validateLogin, type LoginErrors } from "@/lib/auth";
 
 interface LoginNotice {
   variant: "ok" | "mal";
@@ -17,16 +17,28 @@ const LABEL_CLASS =
 const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
 
 export default function LoginForm() {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [notice, setNotice] = useState<LoginNotice | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isLoading || timeoutRef.current !== null) return;
 
     const nextErrors = validateLogin({ email, password });
     setErrors(nextErrors);
@@ -34,9 +46,22 @@ export default function LoginForm() {
 
     if (nextErrors.email) {
       emailInputRef.current?.focus();
+      return;
     } else if (nextErrors.password) {
       passwordInputRef.current?.focus();
+      return;
     }
+
+    setIsLoading(true);
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
+      const result = authenticate(email.trim(), password);
+      setNotice({
+        variant: result.ok ? "ok" : "mal",
+        message: result.message,
+      });
+      setIsLoading(false);
+    }, 600);
   }
 
   return (
@@ -106,9 +131,10 @@ export default function LoginForm() {
 
       <button
         type="submit"
+        disabled={isLoading}
         className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
       >
-        Ingresar
+        {isLoading ? "Verificando…" : "Ingresar"}
       </button>
 
       {notice ? (
