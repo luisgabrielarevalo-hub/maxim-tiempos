@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import type { LoginErrors } from "@/lib/auth";
+import { useRef, useState, type FormEvent } from "react";
+import { validateLogin, type LoginErrors } from "@/lib/auth";
 
 interface LoginNotice {
   variant: "ok" | "mal";
@@ -17,14 +17,26 @@ const LABEL_CLASS =
 const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
 
 export default function LoginForm() {
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors] = useState<LoginErrors>({});
-  const [notice] = useState<LoginNotice | null>(null);
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [notice, setNotice] = useState<LoginNotice | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const nextErrors = validateLogin({ email, password });
+    setErrors(nextErrors);
+    setNotice(null);
+
+    if (nextErrors.email) {
+      emailInputRef.current?.focus();
+    } else if (nextErrors.password) {
+      passwordInputRef.current?.focus();
+    }
   }
 
   return (
@@ -34,6 +46,7 @@ export default function LoginForm() {
           Correo electrónico
         </label>
         <input
+          ref={emailInputRef}
           id="login-email"
           name="email"
           type="email"
@@ -45,9 +58,15 @@ export default function LoginForm() {
           placeholder="nombre@empresa.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "login-email-error" : undefined}
           className={FIELD_CLASS}
         />
-        {errors.email ? <p className={ERROR_CLASS}>{errors.email}</p> : null}
+        {errors.email ? (
+          <p id="login-email-error" className={ERROR_CLASS}>
+            {errors.email}
+          </p>
+        ) : null}
       </div>
 
       <div className="mb-[18px] last:mb-0">
@@ -56,6 +75,7 @@ export default function LoginForm() {
         </label>
         <div className="relative">
           <input
+            ref={passwordInputRef}
             id="login-password"
             name="password"
             type={showPassword ? "text" : "password"}
@@ -63,6 +83,8 @@ export default function LoginForm() {
             placeholder="Tu contraseña"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "login-password-error" : undefined}
             className={`${FIELD_CLASS} pr-[74px]`}
           />
           <button
@@ -75,7 +97,11 @@ export default function LoginForm() {
             {showPassword ? "Ocultar" : "Ver"}
           </button>
         </div>
-        {errors.password ? <p className={ERROR_CLASS}>{errors.password}</p> : null}
+        {errors.password ? (
+          <p id="login-password-error" className={ERROR_CLASS}>
+            {errors.password}
+          </p>
+        ) : null}
       </div>
 
       <button
