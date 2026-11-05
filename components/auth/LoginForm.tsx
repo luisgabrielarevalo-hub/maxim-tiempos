@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { authenticate, validateLogin, type LoginErrors } from "@/lib/auth";
+import {
+  authenticate,
+  validateLogin,
+  type LoginErrors,
+  type LoginField,
+} from "@/lib/auth";
 
 interface LoginNotice {
   variant: "ok" | "mal";
@@ -34,6 +39,26 @@ export default function LoginForm() {
       }
     };
   }, []);
+
+  function clearFieldFeedback(field: LoginField) {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setNotice(null);
+  }
+
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    clearFieldFeedback("email");
+  }
+
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    clearFieldFeedback("password");
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +107,7 @@ export default function LoginForm() {
           autoCapitalize="none"
           placeholder="nombre@empresa.com"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => handleEmailChange(event.target.value)}
           aria-invalid={Boolean(errors.email)}
           aria-describedby={errors.email ? "login-email-error" : undefined}
           className={FIELD_CLASS}
@@ -107,7 +132,7 @@ export default function LoginForm() {
             autoComplete="current-password"
             placeholder="Tu contraseña"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => handlePasswordChange(event.target.value)}
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "login-password-error" : undefined}
             className={`${FIELD_CLASS} pr-[74px]`}
@@ -116,7 +141,10 @@ export default function LoginForm() {
             type="button"
             aria-pressed={showPassword}
             aria-controls="login-password"
-            onClick={() => setShowPassword((visible) => !visible)}
+            onClick={() => {
+              setShowPassword((visible) => !visible);
+              clearFieldFeedback("password");
+            }}
             className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded px-2 py-1.5 font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
           >
             {showPassword ? "Ocultar" : "Ver"}
