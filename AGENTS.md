@@ -38,7 +38,7 @@ Run from the repo root.
 
 - UI copy is Spanish (`lang="es"`); keep it that way. Code identifiers (functions, variables) are English.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
-- `observaciones` (max 300) is required for `base` and `pozo`, optional for `descanso` and `licencia`.
+- `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
 - Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login only requires a non-empty code (max 12) and password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
