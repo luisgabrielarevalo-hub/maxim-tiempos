@@ -35,6 +35,9 @@ export function validateLogin(values: LoginFormValues): LoginErrors {
 }
 
 /** Stub de demostración: siempre responde ok. Se sustituirá por la llamada real. */
-export function authenticate(_email: string, _password: string): AuthResult {
+export function authenticate(email: string, password: string): AuthResult {
+  void email;
+  void password;
+
   return { ok: true, message: "Acceso correcto. Bienvenido(a)." };
 }
