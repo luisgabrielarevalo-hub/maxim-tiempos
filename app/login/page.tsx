@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LoginForm from "@/components/auth/LoginForm";
 import LoginPage from "@/components/auth/LoginPage";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function LoginRoute() {
-  return <LoginPage />;
+  return (
+    <LoginPage>
+      <LoginForm />
+    </LoginPage>
+  );
 }
