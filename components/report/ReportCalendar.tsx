@@ -54,7 +54,7 @@ export default function ReportCalendar({
             type="button"
             onClick={onPreviousMonth}
             aria-label="Mes anterior"
-            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent"
+            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
           >
             <ChevronLeftIcon />
           </button>
@@ -62,14 +62,14 @@ export default function ReportCalendar({
             type="button"
             onClick={onNextMonth}
             aria-label="Mes siguiente"
-            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent"
+            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
           >
             <ChevronRightIcon />
           </button>
           <button
             type="button"
             onClick={onToday}
-            className="rounded-md border border-input bg-card px-3 py-1.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent"
+            className="rounded-md border border-input bg-card px-3 py-1.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
           >
             Hoy
           </button>
@@ -110,7 +110,7 @@ export default function ReportCalendar({
                       onClick={() => onSelectDate(date)}
                       aria-label={formatLongDate(date) || date}
                       aria-pressed={isSelected}
-                      className={`relative aspect-square w-full rounded-md text-sm transition-colors ${
+                      className={`relative aspect-square w-full rounded-md text-sm transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none ${
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : `hover:bg-muted ${inMonth ? "text-foreground" : "text-muted-foreground/55"}`

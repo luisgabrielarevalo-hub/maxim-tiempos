@@ -22,10 +22,10 @@ const LABEL_CLASS =
 const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
 
 const PRIMARY_BUTTON_CLASS =
-  "inline-flex items-center gap-2 rounded-md bg-primary px-[18px] py-2.5 font-display text-[19px] tracking-[0.06em] text-primary-foreground transition-colors hover:bg-primary/90";
+  "inline-flex items-center gap-2 rounded-md bg-primary px-[18px] py-2.5 font-display text-[19px] tracking-[0.06em] text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none";
 
 const SECONDARY_BUTTON_CLASS =
-  "inline-flex items-center gap-2 rounded-md border border-input bg-card px-[18px] py-2.5 font-display text-[19px] tracking-[0.06em] text-foreground transition-colors hover:bg-accent";
+  "inline-flex items-center gap-2 rounded-md border border-input bg-card px-[18px] py-2.5 font-display text-[19px] tracking-[0.06em] text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none";
 
 interface ReportFormProps {
   values: ReportFormValues;
