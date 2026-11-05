@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Registro del empleado | Bitácora de personal</title>
+    <meta
+      name="description"
+      content="Plantilla de registro del empleado: datos personales, código alfanumérico de 5 caracteres y cuenta de acceso."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --radius: 0.375rem;
+        --background: oklch(0.972 0.01 85);
+        --foreground: oklch(0.22 0.025 255);
+        --card: oklch(0.995 0.005 85);
+        --primary: oklch(0.28 0.03 255);
+        --primary-foreground: oklch(0.98 0.008 85);
+        --muted: oklch(0.935 0.012 85);
+        --muted-foreground: oklch(0.52 0.02 255);
+        --accent: oklch(0.93 0.03 75);
+        --destructive: oklch(0.577 0.245 27.325);
+        --success: oklch(0.56 0.11 165);
+        --border: oklch(0.855 0.015 80);
+        --input: oklch(0.855 0.015 80);
+        --ring: oklch(0.68 0.15 60);
+        --status-pozo: oklch(0.66 0.16 55);
+        --font-display: "Bebas Neue", "Barlow", ui-sans-serif, sans-serif;
+        --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .cinta {
+        height: 10px;
+        background-image: repeating-linear-gradient(
+          135deg,
+          var(--status-pozo) 0 12px,
+          transparent 12px 24px
+        );
+      }
+
+      header.portada {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+
+      .portada-int {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 32px 16px 26px;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.24em;
+        opacity: 0.7;
+        margin: 0;
+      }
+
+      .portada h1 {
+        font-family: var(--font-display);
+        font-size: clamp(40px, 8vw, 54px);
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+        margin: 6px 0 0;
+        font-weight: 400;
+      }
+
+      .portada-nota {
+        max-width: 460px;
+        font-size: 13px;
+        line-height: 1.45;
+        opacity: 0.75;
+        margin: 10px 0 0;
+      }
+
+      .wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 32px 16px 48px;
+        width: 100%;
+        flex: 1;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+        overflow: hidden;
+      }
+
+      .seccion {
+        border-top: 1px solid var(--border);
+        padding: 24px 20px;
+      }
+
+      .seccion:first-child {
+        border-top: 0;
+      }
+
+      @media (min-width: 640px) {
+        .seccion {
+          padding: 28px 32px;
+        }
+      }
+
+      .seccion > header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .num {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--status-pozo);
+      }
+
+      .seccion h2 {
+        font-family: var(--font-display);
+        font-size: 26px;
+        line-height: 1;
+        letter-spacing: 0.03em;
+        font-weight: 400;
+        margin: 0;
+      }
+
+      .grilla {
+        display: grid;
+        gap: 0 18px;
+      }
+
+      @media (min-width: 640px) {
+        .grilla {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .etiqueta {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted-foreground);
+        margin-bottom: 6px;
+      }
+
+      .campo-fila {
+        margin-bottom: 18px;
+      }
+
+      .campo-fila:last-child {
+        margin-bottom: 0;
+      }
+
+      .campo {
+        width: 100%;
+        border: 1px solid var(--input);
+        background: var(--card);
+        color: var(--foreground);
+        border-radius: 6px;
+        padding: 11px 12px;
+        font-size: 15px;
+        font-family: var(--font-sans);
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .campo::placeholder {
+        color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+      }
+
+      .campo:focus-visible {
+        border-color: var(--ring);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+      }
+
+      .campo-con-boton {
+        position: relative;
+      }
+
+      .campo-con-boton .campo {
+        padding-right: 74px;
+      }
+
+      .toggle-ver {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 4px;
+      }
+
+      .toggle-ver:hover {
+        color: var(--foreground);
+        background: var(--muted);
+      }
+
+      .error {
+        margin: 6px 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--destructive);
+      }
+
+      .error:empty {
+        display: none;
+      }
+
+      /* Bloque destacado del código de 5 caracteres */
+      .bloque-codigo {
+        border: 1px solid color-mix(in oklab, var(--status-pozo) 45%, var(--border));
+        background: color-mix(in oklab, var(--status-pozo) 8%, var(--card));
+        border-radius: 8px;
+        padding: 18px 16px;
+      }
+
+      .codigo-linea {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .campo-codigo {
+        width: 190px;
+        max-width: 100%;
+        border: 1px solid var(--input);
+        background: var(--card);
+        color: var(--foreground);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-family: var(--font-mono);
+        font-size: 24px;
+        font-weight: 500;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .campo-codigo:focus-visible {
+        border-color: var(--ring);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+      }
+
+      .segundos {
+        display: flex;
+        gap: 6px;
+      }
+
+      .segundo {
+        width: 26px;
+        height: 4px;
+        border-radius: 2px;
+        background: color-mix(in oklab, var(--muted-foreground) 30%, var(--border));
+        transition: background 0.15s;
+      }
+
+      .segundo.lleno {
+        background: var(--status-pozo);
+      }
+
+      .contar {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted-foreground);
+        margin-left: auto;
+      }
+
+      .reglas {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 5px;
+      }
+
+      .reglas li {
+        font-size: 13px;
+        color: var(--muted-foreground);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .reglas li::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+        flex: none;
+      }
+
+      .reglas li.ok {
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      .reglas li.ok::before {
+        background: var(--success);
+        border-color: var(--success);
+      }
+
+      .generar {
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--foreground);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        padding: 8px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .generar:hover {
+        border-color: var(--status-pozo);
+        color: var(--status-pozo);
+      }
+
+      .nota {
+        margin: 10px 0 0;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted-foreground);
+      }
+
+      .recordar {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 14px;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        user-select: none;
+        line-height: 1.45;
+      }
+
+      .recordar input {
+        width: 16px;
+        height: 16px;
+        margin-top: 2px;
+        accent-color: var(--primary);
+        cursor: pointer;
+        flex: none;
+      }
+
+      .boton {
+        width: 100%;
+        border: 0;
+        border-radius: 6px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font-family: var(--font-display);
+        font-size: 22px;
+        line-height: 1;
+        letter-spacing: 0.06em;
+        padding: 14px 16px 12px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .boton:hover {
+        opacity: 0.92;
+      }
+
+      .boton:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .aviso {
+        margin: 0;
+        padding: 14px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid var(--border);
+        background: var(--muted);
+        display: none;
+      }
+
+      .aviso.ok {
+        display: block;
+        border-color: color-mix(in oklab, var(--success) 40%, var(--border));
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      .aviso.mal {
+        display: block;
+        border-color: color-mix(in oklab, var(--destructive) 40%, var(--border));
+        color: var(--destructive);
+        font-weight: 600;
+      }
+
+      .ficha {
+        margin: 14px 0 0;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        overflow: hidden;
+        display: none;
+      }
+
+      .ficha.visible {
+        display: block;
+      }
+
+      .ficha dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .ficha div {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        font-size: 14px;
+      }
+
+      .ficha div:first-child {
+        border-top: 0;
+      }
+
+      .ficha dt {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted-foreground);
+        padding-top: 3px;
+      }
+
+      .ficha dd {
+        margin: 0;
+        font-weight: 600;
+        text-align: right;
+        word-break: break-word;
+      }
+
+      .ficha dd.codigo {
+        font-family: var(--font-mono);
+        letter-spacing: 0.22em;
+        color: var(--status-pozo);
+      }
+
+      .pie {
+        border-top: 1px solid var(--border);
+        background: var(--card);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted-foreground);
+        text-align: center;
+        padding: 14px 16px;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+        .generar,
+        .toggle-ver,
+        .boton {
+          display: none;
+        }
+        .panel {
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cinta" aria-hidden="true"></div>
+
+    <header class="portada">
+      <div class="portada-int">
+        <p class="kicker">Bitácora de personal · Registro</p>
+        <h1>Registro del empleado</h1>
+        <p class="portada-nota">
+          Complete los datos del empleado y asigne su código de 5 caracteres.
+          Con ese código y la contraseña, el empleado ingresa a reportar su
+          jornada.
+        </p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <form class="panel" id="form-registro" novalidate>
+        <section class="seccion">
+          <header>
+            <span class="num">01</span>
+            <h2>Datos del empleado</h2>
+          </header>
+
+          <div class="grilla">
+            <div class="campo-fila">
+              <label class="etiqueta" for="nombre">Nombre completo</label>
+              <input
+                class="campo"
+                id="nombre"
+                name="nombre"
+                type="text"
+                autocomplete="name"
+                placeholder="Ej. María Fernanda López"
+              />
+              <p class="error" id="error-nombre"></p>
+            </div>
+
+            <div class="campo-fila">
+              <label class="etiqueta" for="correo">Correo electrónico</label>
+              <input
+                class="campo"
+                id="correo"
+                name="correo"
+                type="email"
+                autocomplete="email"
+                placeholder="Ej. mlopez@empresa.com"
+              />
+              <p class="error" id="error-correo"></p>
+            </div>
+
+            <div class="campo-fila">
+              <label class="etiqueta" for="area">Área o puesto</label>
+              <input
+                class="campo"
+                id="area"
+                name="area"
+                type="text"
+                placeholder="Ej. Operaciones de pozo"
+              />
+              <p class="error" id="error-area"></p>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="seccion">
+          <header>
+            <span class="num">02</span>
+            <h2>Código de empleado</h2>
+          </header>
+
+          <div class="bloque-codigo">
+            <label class="etiqueta" for="codigo">
+              Código alfanumérico de 5 caracteres
+            </label>
+
+            <div class="codigo-linea">
+              <input
+                class="campo-codigo"
+                id="codigo"
+                name="codigo"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                spellcheck="false"
+                autocapitalize="characters"
+                placeholder="AB12C"
+                maxlength="5"
+                aria-describedby="reglas-codigo"
+              />
+            
+          </div>
+        </section>
+
+        <section class="seccion">
+          <header>
+            <span class="num">03</span>
+            <h2>Cuenta de acceso</h2>
+          </header>
+
+          <div class="grilla">
+            <div class="campo-fila">
+              <label class="etiqueta" for="clave">Contraseña</label>
+              <div class="campo-con-boton">
+                <input
+                  class="campo"
+                  id="clave"
+                  name="clave"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Mínimo 8 caracteres"
+                />
+                <button
+                  type="button"
+                  class="toggle-ver"
+                  id="toggle-ver"
+                  aria-pressed="false"
+                >
+                  Ver
+                </button>
+              </div>
+              <p class="error" id="error-clave"></p>
+            </div>
+
+            <div class="campo-fila">
+              <label class="etiqueta" for="clave2">Confirmar contraseña</label>
+              <div class="campo-con-boton">
+                <input
+                  class="campo"
+                  id="clave2"
+                  name="clave2"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Repite la contraseña"
+                />
+                <button
+                  type="button"
+                  class="toggle-ver"
+                  id="toggle-ver2"
+                  aria-pressed="false"
+                >
+                  Ver
+                </button>
+              </div>
+              <p class="error" id="error-clave2"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="seccion">
+      
+
+          <button class="boton" type="submit" id="boton" style="margin-top: 20px">
+            Registrar empleado
+          </button>
+
+          <p class="aviso" id="aviso" role="status"></p>
+
+          <div class="ficha" id="ficha">
+            <dl>
+              <div>
+                <dt>Nombre</dt>
+                <dd id="ficha-nombre"></dd>
+              </div>
+              <div>
+                <dt>Correo</dt>
+                <dd id="ficha-correo"></dd>
+              </div>
+              <div>
+                <dt>Área</dt>
+                <dd id="ficha-area"></dd>
+              </div>
+              <div>
+                <dt>Código</dt>
+                <dd class="codigo" id="ficha-codigo"></dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <script>
+      // Plantilla de demostración: reemplaza esta función por el guardado real
+      // en tu sistema de personal (base de datos, nómina, etc.).
+      function guardarEmpleado(datos) {
+        return { ok: true, mensaje: "Empleado registrado correctamente." };
+      }
+
+      var form = document.getElementById("form-registro");
+      var nombre = document.getElementById("nombre");
+      var correo = document.getElementById("correo");
+      var area = document.getElementById("area");
+      var codigo = document.getElementById("codigo");
+      var clave = document.getElementById("clave");
+      var clave2 = document.getElementById("clave2");
+      var acepto = document.getElementById("acepto");
+      var boton = document.getElementById("boton");
+      var aviso = document.getElementById("aviso");
+      var ficha = document.getElementById("ficha");
+      var contar = document.getElementById("contar");
+      var segundos = document.getElementById("segundos").children;
+      var reglaLargo = document.getElementById("regla-largo");
+      var reglaAlfanum = document.getElementById("regla-alfanum");
+      var reglaMixto = document.getElementById("regla-mixto");
+
+      var ERRORES = {
+        nombre: document.getElementById("error-nombre"),
+        correo: document.getElementById("error-correo"),
+        area: document.getElementById("error-area"),
+        codigo: document.getElementById("error-codigo"),
+        clave: document.getElementById("error-clave"),
+        clave2: document.getElementById("error-clave2"),
+        acepto: document.getElementById("error-acepto"),
+      };
+
+      function limpiarErrores() {
+        Object.keys(ERRORES).forEach(function (k) {
+          ERRORES[k].textContent = "";
+        });
+      }
+
+      // Cada campo borra su mensaje en cuanto se corrige.
+      [
+        [nombre, "nombre"],
+        [correo, "correo"],
+        [area, "area"],
+        [codigo, "codigo"],
+        [clave, "clave"],
+        [clave2, "clave2"],
+      ].forEach(function (par) {
+        par[0].addEventListener("input", function () {
+          ERRORES[par[1]].textContent = "";
+        });
+      });
+
+      acepto.addEventListener("change", function () {
+        ERRORES.acepto.textContent = "";
+      });
+
+      function codigoValido(v) {
+        return /^[A-Z0-9]{5}$/.test(v) && /[A-Z]/.test(v) && /[0-9]/.test(v);
+      }
+
+      // El campo solo acepta letras y números, siempre en mayúsculas.
+      codigo.addEventListener("input", function () {
+        var limpio = codigo.value
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "")
+          .slice(0, 5);
+        if (limpio !== codigo.value) codigo.value = limpio;
+        pintarCodigo();
+      });
+
+      function pintarCodigo() {
+        var v = codigo.value;
+        contar.textContent = v.length + "/5";
+        for (var i = 0; i < segundos.length; i++) {
+          segundos[i].className = "segundo" + (i < v.length ? " lleno" : "");
+        }
+        var largoOk = v.length === 5;
+        var alfanumOk = v === "" || /^[A-Z0-9]+$/.test(v);
+        var mixtoOk = /[A-Z]/.test(v) && /[0-9]/.test(v);
+        reglaLargo.className = largoOk ? "ok" : "";
+        reglaAlfanum.className = alfanumOk ? "ok" : "";
+        reglaMixto.className = mixtoOk ? "ok" : "";
+      }
+
+      // Genera un código válido sin caracteres confusables (I, O, 0, 1).
+      document.getElementById("generar").addEventListener("click", function () {
+        var letras = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        var numeros = "23456789";
+        var salida = [];
+        for (var i = 0; i < 3; i++) {
+          salida.push(letras.charAt(Math.floor(Math.random() * letras.length)));
+        }
+        for (var j = 0; j < 2; j++) {
+          salida.push(numeros.charAt(Math.floor(Math.random() * numeros.length)));
+        }
+        salida.sort(function () {
+          return Math.random() - 0.5;
+        });
+        codigo.value = salida.join("");
+        pintarCodigo();
+        codigo.focus();
+      });
+
+      function alternarVer(input, botonVer) {
+        var ver = input.type === "password";
+        input.type = ver ? "text" : "password";
+        botonVer.textContent = ver ? "Ocultar" : "Ver";
+        botonVer.setAttribute("aria-pressed", String(ver));
+      }
+
+      document
+        .getElementById("toggle-ver")
+        .addEventListener("click", function () {
+          alternarVer(clave, this);
+        });
+
+      document
+        .getElementById("toggle-ver2")
+        .addEventListener("click", function () {
+          alternarVer(clave2, this);
+        });
+
+      form.addEventListener("submit", function (evento) {
+        evento.preventDefault();
+        limpiarErrores();
+        aviso.className = "aviso";
+        aviso.textContent = "";
+        ficha.className = "ficha";
+        var valido = true;
+
+        var vNombre = nombre.value.trim();
+        var vCorreo = correo.value.trim();
+        var vArea = area.value.trim();
+        var vCodigo = codigo.value;
+
+        if (!vNombre) {
+          ERRORES.nombre.textContent = "Escribe el nombre completo.";
+          valido = false;
+        }
+        if (!vCorreo) {
+          ERRORES.correo.textContent = "Escribe el correo electrónico.";
+          valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(vCorreo)) {
+          ERRORES.correo.textContent = "El correo no tiene un formato válido.";
+          valido = false;
+        }
+        if (!vCodigo) {
+          ERRORES.codigo.textContent = "Escribe el código de 5 caracteres.";
+          valido = false;
+        } else if (vCodigo.length !== 5) {
+          ERRORES.codigo.textContent = "El código debe tener 5 caracteres.";
+          valido = false;
+        } else if (!/^[A-Z0-9]{5}$/.test(vCodigo)) {
+          ERRORES.codigo.textContent = "El código solo admite letras y números.";
+          valido = false;
+        } else if (!(/[A-Z]/.test(vCodigo) && /[0-9]/.test(vCodigo))) {
+          ERRORES.codigo.textContent =
+            "El código debe mezclar letras y números.";
+          valido = false;
+        }
+
+        if (!clave.value) {
+          ERRORES.clave.textContent = "Escribe una contraseña.";
+          valido = false;
+        } else if (clave.value.length < 8) {
+          ERRORES.clave.textContent = "La contraseña debe tener 8 caracteres o más.";
+          valido = false;
+        }
+        if (!clave2.value) {
+          ERRORES.clave2.textContent = "Confirma la contraseña.";
+          valido = false;
+        } else if (clave2.value !== clave.value) {
+          ERRORES.clave2.textContent = "Las contraseñas no coinciden.";
+          valido = false;
+        }
+        if (!acepto.checked) {
+          ERRORES.acepto.textContent = "Marca la casilla para continuar.";
+          valido = false;
+        }
+
+        if (!valido) {
+          aviso.className = "aviso mal";
+          aviso.textContent = "Revisa los campos marcados.";
+          return;
+        }
+
+        boton.disabled = true;
+        boton.textContent = "Guardando…";
+
+        var datos = {
+          nombre: vNombre,
+          correo: vCorreo,
+          area: vArea,
+          codigo: vCodigo,
+        };
+
+        // Simulación local: sustituir por el guardado real.
+        setTimeout(function () {
+          var resultado = guardarEmpleado(datos);
+          boton.disabled = false;
+          boton.textContent = "Registrar empleado";
+          if (resultado.ok) {
+            aviso.className = "aviso ok";
+            aviso.textContent = resultado.mensaje;
+            document.getElementById("ficha-nombre").textContent = datos.nombre;
+            document.getElementById("ficha-correo").textContent = datos.correo;
+            document.getElementById("ficha-area").textContent = datos.area || "—";
+            document.getElementById("ficha-codigo").textContent = datos.codigo;
+            ficha.className = "ficha visible";
+          } else {
+            aviso.className = "aviso mal";
+            aviso.textContent = resultado.mensaje;
+          }
+        }, 600);
+      });
+
+      pintarCodigo();
+    </script>
+  </body>
+</html>

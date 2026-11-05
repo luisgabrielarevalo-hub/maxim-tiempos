@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Acceso del empleado | Bitácora de personal</title>
+    <meta
+      name="description"
+      content="Plantilla de acceso para el personal: código de empleado y contraseña. Ingresa para reportar la jornada del día."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --radius: 0.375rem;
+        --background: oklch(0.972 0.01 85);
+        --foreground: oklch(0.22 0.025 255);
+        --card: oklch(0.995 0.005 85);
+        --primary: oklch(0.28 0.03 255);
+        --primary-foreground: oklch(0.98 0.008 85);
+        --muted: oklch(0.935 0.012 85);
+        --muted-foreground: oklch(0.52 0.02 255);
+        --accent: oklch(0.93 0.03 75);
+        --destructive: oklch(0.577 0.245 27.325);
+        --success: oklch(0.56 0.11 165);
+        --border: oklch(0.855 0.015 80);
+        --input: oklch(0.855 0.015 80);
+        --ring: oklch(0.68 0.15 60);
+        --status-pozo: oklch(0.66 0.16 55);
+        --font-display: "Bebas Neue", "Barlow", ui-sans-serif, sans-serif;
+        --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Cinta superior */
+      .cinta {
+        height: 10px;
+        background-image: repeating-linear-gradient(
+          135deg,
+          var(--status-pozo) 0 12px,
+          transparent 12px 24px
+        );
+      }
+
+      header.portada {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+
+      .portada-int {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 32px 16px 26px;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.24em;
+        opacity: 0.7;
+        margin: 0;
+      }
+
+      .portada h1 {
+        font-family: var(--font-display);
+        font-size: clamp(40px, 8vw, 54px);
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+        margin: 6px 0 0;
+        font-weight: 400;
+      }
+
+      .portada-nota {
+        max-width: 420px;
+        font-size: 13px;
+        line-height: 1.45;
+        opacity: 0.75;
+        margin: 10px 0 0;
+      }
+
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 32px 16px 48px;
+        width: 100%;
+        flex: 1;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+        overflow: hidden;
+      }
+
+      .seccion {
+        border-top: 1px solid var(--border);
+        padding: 24px 20px;
+      }
+
+      .seccion:first-child {
+        border-top: 0;
+      }
+
+      @media (min-width: 640px) {
+        .seccion {
+          padding: 28px 32px;
+        }
+      }
+
+      .seccion > header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .num {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--status-pozo);
+      }
+
+      .seccion h2 {
+        font-family: var(--font-display);
+        font-size: 26px;
+        line-height: 1;
+        letter-spacing: 0.03em;
+        font-weight: 400;
+        margin: 0;
+      }
+
+      .etiqueta {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted-foreground);
+        margin-bottom: 6px;
+      }
+
+      .campo-fila {
+        margin-bottom: 18px;
+      }
+
+      .campo-fila:last-child {
+        margin-bottom: 0;
+      }
+
+      .campo {
+        width: 100%;
+        border: 1px solid var(--input);
+        background: var(--card);
+        color: var(--foreground);
+        border-radius: 6px;
+        padding: 11px 12px;
+        font-size: 15px;
+        font-family: var(--font-mono);
+        letter-spacing: 0.04em;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .campo::placeholder {
+        color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+        font-family: var(--font-sans);
+        letter-spacing: normal;
+      }
+
+      .campo:focus-visible {
+        border-color: var(--ring);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+      }
+
+      .campo-con-boton {
+        position: relative;
+      }
+
+      .campo-con-boton .campo {
+        padding-right: 74px;
+      }
+
+      .toggle-ver {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 4px;
+      }
+
+      .toggle-ver:hover {
+        color: var(--foreground);
+        background: var(--muted);
+      }
+
+      .error {
+        margin: 6px 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--destructive);
+      }
+
+      .error:empty {
+        display: none;
+      }
+
+      .fila-opciones {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        margin: 4px 0 20px;
+      }
+
+      .recordar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .recordar input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      .ayuda {
+        font-size: 13px;
+        color: var(--muted-foreground);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+      }
+
+      .ayuda:hover {
+        color: var(--foreground);
+      }
+
+      .boton {
+        width: 100%;
+        border: 0;
+        border-radius: 6px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font-family: var(--font-display);
+        font-size: 22px;
+        line-height: 1;
+        letter-spacing: 0.06em;
+        padding: 14px 16px 12px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .boton:hover {
+        opacity: 0.92;
+      }
+
+      .boton:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .aviso {
+        margin: 16px 0 0;
+        padding: 14px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid var(--border);
+        background: var(--muted);
+        display: none;
+      }
+
+      .aviso.ok {
+        display: block;
+        border-color: color-mix(in oklab, var(--success) 40%, var(--border));
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      .aviso.mal {
+        display: block;
+        border-color: color-mix(in oklab, var(--destructive) 40%, var(--border));
+        color: var(--destructive);
+        font-weight: 600;
+      }
+
+      .pie {
+        border-top: 1px solid var(--border);
+        background: var(--card);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted-foreground);
+        text-align: center;
+        padding: 14px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cinta" aria-hidden="true"></div>
+
+    <header class="portada">
+      <div class="portada-int">
+        <p class="kicker">Bitácora de personal · Acceso</p>
+        <h1>Ingreso del empleado</h1>
+        <p class="portada-nota">
+          Ingresa con tu código de empleado y contraseña para reportar tu
+          jornada del día.
+        </p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <form class="panel" id="form-login" novalidate>
+        <section class="seccion">
+          <header>
+            <span class="num">01</span>
+            <h2>Credenciales</h2>
+          </header>
+
+          <div class="campo-fila">
+            <label class="etiqueta" for="codigo">Código de empleado</label>
+            <input
+              class="campo"
+              id="codigo"
+              name="codigo"
+              type="text"
+              inputmode="numeric"
+              autocomplete="username"
+              placeholder="Ej. 0042"
+              maxlength="12"
+            />
+            <p class="error" id="error-codigo"></p>
+          </div>
+
+          <div class="campo-fila">
+            <label class="etiqueta" for="clave">Contraseña</label>
+            <div class="campo-con-boton">
+              <input
+                class="campo"
+                id="clave"
+                name="clave"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Tu contraseña"
+              />
+              <button
+                type="button"
+                class="toggle-ver"
+                id="toggle-ver"
+                aria-pressed="false"
+              >
+                Ver
+              </button>
+            </div>
+            <p class="error" id="error-clave"></p>
+          </div>
+
+          <div class="fila-opciones">
+            <label class="recordar">
+              <input type="checkbox" id="recordar" name="recordar" />
+              Mantener la sesión abierta
+            </label>
+            <span class="ayuda" role="button" tabindex="0">¿Olvidaste tu contraseña?</span>
+          </div>
+
+          <button class="boton" type="submit" id="boton">Ingresar</button>
+        </section>
+
+        <section class="seccion">
+          <p class="aviso" id="aviso" role="status"></p>
+        </section>
+      </form>
+    </main>
+
+    <footer class="pie">Plantilla de acceso · Uso interno del personal</footer>
+
+    <script>
+      // Plantilla de demostración: reemplaza esta función por la llamada
+      // real a tu servidor o sistema de personal.
+      function validarCredenciales(codigo, clave) {
+        return { ok: true, mensaje: "Acceso correcto. Bienvenido(a)." };
+      }
+
+      var form = document.getElementById("form-login");
+      var codigo = document.getElementById("codigo");
+      var clave = document.getElementById("clave");
+      var errorCodigo = document.getElementById("error-codigo");
+      var errorClave = document.getElementById("error-clave");
+      var aviso = document.getElementById("aviso");
+      var boton = document.getElementById("boton");
+      var toggleVer = document.getElementById("toggle-ver");
+
+      function limpiarErrores() {
+        errorCodigo.textContent = "";
+        errorClave.textContent = "";
+      }
+
+      toggleVer.addEventListener("click", function () {
+        var ver = clave.type === "password";
+        clave.type = ver ? "text" : "password";
+        toggleVer.textContent = ver ? "Ocultar" : "Ver";
+        toggleVer.setAttribute("aria-pressed", String(ver));
+      });
+
+      form.addEventListener("submit", function (evento) {
+        evento.preventDefault();
+        limpiarErrores();
+        aviso.className = "aviso";
+        aviso.textContent = "";
+
+        var valorCodigo = codigo.value.trim();
+        var valorClave = clave.value;
+        var valido = true;
+
+        if (!valorCodigo) {
+          errorCodigo.textContent = "Escribe tu código de empleado.";
+          valido = false;
+        }
+        if (!valorClave) {
+          errorClave.textContent = "Escribe tu contraseña.";
+          valido = false;
+        }
+
+        if (!valido) {
+          aviso.className = "aviso mal";
+          aviso.textContent = "Revisa los campos marcados.";
+          return;
+        }
+
+        boton.disabled = true;
+        boton.textContent = "Verificando…";
+
+        // Simulación local: sustituir por validación real.
+        setTimeout(function () {
+          var resultado = validarCredenciales(valorCodigo, valorClave);
+          if (resultado.ok) {
+            aviso.className = "aviso ok";
+            aviso.textContent = resultado.mensaje;
+          } else {
+            aviso.className = "aviso mal";
+            aviso.textContent = resultado.mensaje;
+          }
+          boton.disabled = false;
+          boton.textContent = "Ingresar";
+        }, 600);
+      });
+    </script>
+  </body>
+</html>
