@@ -40,7 +40,7 @@ Run from the repo root.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
 - `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
-- Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login only requires a non-empty code (max 12) and password.
+- Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login requires a valid email address and a non-empty password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
 - `registro-empleado.html` references elements that no longer exist (`generar`, `segundos`, `contar`, `regla-*`, `acepto`), so its script throws on load. Treat it as a visual reference, not a working implementation.
 - The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; there is no backend or persistence yet.
