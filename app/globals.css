@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.375rem;
+  --background: oklch(0.972 0.01 85);
+  --foreground: oklch(0.22 0.025 255);
+  --card: oklch(0.995 0.005 85);
+  --primary: oklch(0.28 0.03 255);
+  --primary-foreground: oklch(0.98 0.008 85);
+  --muted: oklch(0.935 0.012 85);
+  --muted-foreground: oklch(0.52 0.02 255);
+  --accent: oklch(0.93 0.03 75);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.855 0.015 80);
+  --input: oklch(0.855 0.015 80);
+  --ring: oklch(0.68 0.15 60);
+  --status-base: oklch(0.5 0.09 250);
+  --status-base-soft: oklch(0.95 0.03 250);
+  --status-pozo: oklch(0.66 0.16 55);
+  --status-pozo-soft: oklch(0.95 0.05 75);
+  --status-descanso: oklch(0.56 0.11 165);
+  --status-descanso-soft: oklch(0.95 0.04 165);
+  --status-licencia: oklch(0.52 0.08 305);
+  --status-licencia-soft: oklch(0.95 0.02 305);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-status-base: var(--status-base);
+  --color-status-base-soft: var(--status-base-soft);
+  --color-status-pozo: var(--status-pozo);
+  --color-status-pozo-soft: var(--status-pozo-soft);
+  --color-status-descanso: var(--status-descanso);
+  --color-status-descanso-soft: var(--status-descanso-soft);
+  --color-status-licencia: var(--status-licencia);
+  --color-status-licencia-soft: var(--status-licencia-soft);
+  --radius-sm: var(--radius);
+  --font-display: var(--font-bebas-neue), "Barlow", ui-sans-serif, sans-serif;
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
