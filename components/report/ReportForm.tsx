@@ -242,12 +242,14 @@ export default function ReportForm({
         <span
           role="status"
           aria-live="polite"
-          className={`items-center gap-1.5 text-[13px] font-semibold text-status-descanso ${
-            showSuccess ? "inline-flex" : "hidden"
-          }`}
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-status-descanso"
         >
-          <CheckIcon />
-          Reporte completo
+          {showSuccess ? (
+            <>
+              <CheckIcon />
+              Reporte completo
+            </>
+          ) : null}
         </span>
       </div>
     </form>

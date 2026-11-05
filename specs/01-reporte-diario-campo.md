@@ -1,6 +1,6 @@
 # SPEC 01 — Reporte diario de campo
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** Ninguno
 > **Fecha:** 2026-11-05
 > **Objetivo:** Implementar en Next.js la pantalla `/` (home) a partir del prototipo `Referencias/reporte-diario-campo.html`, con formulario validado, histórico en memoria y calendario, usando íconos lineales de temática petrolera.
@@ -121,29 +121,29 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `/` responde y muestra la pantalla en español sin errores en consola.
-- [ ] `/` es la pantalla del reporte diario y ya no muestra el contenido del starter de `create-next-app`.
-- [ ] La fecha inicia en el día local actual y su atributo `max` también es hoy.
-- [ ] Una fecha futura muestra "La fecha no puede ser futura." y no agrega el reporte.
-- [ ] Enviar sin estado muestra "Selecciona dónde estuvo ese día." y enfoca el primer radio.
-- [ ] Elegir "En pozo" revela los campos de pozo y actividad; elegir otro estado los oculta y los vacía.
-- [ ] El pozo es obligatorio, acepta máximo 60 caracteres y muestra error si se excede.
-- [ ] La actividad es obligatoria, acepta máximo 500 caracteres y muestra error si se excede.
-- [ ] Las observaciones aceptan máximo 300 caracteres y muestran error si se excede.
-- [ ] Los contadores muestran `n/500` y `n/300` y cambian a color destructivo al exceder el límite.
-- [ ] Las observaciones son obligatorias para `base` y opcionales para `pozo`, `descanso` y `licencia`.
-- [ ] La etiqueta de observaciones cambia entre "Obligatorio para este día" y "Opcional" según el estado.
-- [ ] Un envío válido agrega exactamente un reporte, selecciona su fecha en el calendario y muestra "Reporte completo".
-- [ ] El calendario siempre tiene 42 celdas, empieza en lunes, marca hoy y el día seleccionado, y muestra un punto del color del último estado del día.
-- [ ] Las flechas de mes y el botón "Hoy" actualizan el calendario sin modificar el formulario.
-- [ ] El detalle del día lista todos los reportes de la fecha seleccionada; si es pozo, muestra pozo y actividad.
-- [ ] Un día sin reportes muestra el estado vacío "No hay reportes generados para este día."
-- [ ] "Limpiar" restablece el formulario, pone la fecha en hoy, limpia errores y oculta la insignia.
-- [ ] No existen controles de "Copiar texto" ni "Imprimir / PDF".
-- [ ] El layout es de dos columnas con histórico sticky desde 960 px y de una columna por debajo.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
-- [ ] La consola del navegador no muestra advertencias de hidratación ni errores de React.
-- [ ] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
+- [x] `/` responde y muestra la pantalla en español sin errores en consola.
+- [x] `/` es la pantalla del reporte diario y ya no muestra el contenido del starter de `create-next-app`.
+- [x] La fecha inicia en el día local actual y su atributo `max` también es hoy.
+- [x] Una fecha futura muestra "La fecha no puede ser futura." y no agrega el reporte.
+- [x] Enviar sin estado muestra "Selecciona dónde estuvo ese día." y enfoca el primer radio.
+- [x] Elegir "En pozo" revela los campos de pozo y actividad; elegir otro estado los oculta y los vacía.
+- [x] El pozo es obligatorio, acepta máximo 60 caracteres y muestra error si se excede.
+- [x] La actividad es obligatoria, acepta máximo 500 caracteres y muestra error si se excede.
+- [x] Las observaciones aceptan máximo 300 caracteres y muestran error si se excede.
+- [x] Los contadores muestran `n/500` y `n/300` y cambian a color destructivo al exceder el límite.
+- [x] Las observaciones son obligatorias para `base` y opcionales para `pozo`, `descanso` y `licencia`.
+- [x] La etiqueta de observaciones cambia entre "Obligatorio para este día" y "Opcional" según el estado.
+- [x] Un envío válido agrega exactamente un reporte, selecciona su fecha en el calendario y muestra "Reporte completo".
+- [x] El calendario siempre tiene 42 celdas, empieza en lunes, marca hoy y el día seleccionado, y muestra un punto del color del último estado del día.
+- [x] Las flechas de mes y el botón "Hoy" actualizan el calendario sin modificar el formulario.
+- [x] El detalle del día lista todos los reportes de la fecha seleccionada; si es pozo, muestra pozo y actividad.
+- [x] Un día sin reportes muestra el estado vacío "No hay reportes generados para este día."
+- [x] "Limpiar" restablece el formulario, pone la fecha en hoy, limpia errores y oculta la insignia.
+- [x] No existen controles de "Copiar texto" ni "Imprimir / PDF".
+- [x] El layout es de dos columnas con histórico sticky desde 960 px y de una columna por debajo.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
+- [x] La consola del navegador no muestra advertencias de hidratación ni errores de React.
+- [x] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
 
 ---
 

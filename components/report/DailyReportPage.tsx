@@ -54,10 +54,7 @@ export default function DailyReportPage() {
               Reporte diario de campo
             </h1>
           </div>
-          <p className="max-w-xs text-[13px] leading-[1.4] opacity-75">
-            Selecciona dónde estuvo la persona ese día. Si trabajó en pozo, la plantilla pide cuál
-            fue y qué actividad hizo.
-          </p>
+         
         </div>
       </header>
 
