@@ -9,13 +9,7 @@ import {
   type DayStatus,
 } from "@/lib/report";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
-
-const DOT_CLASS: Record<DayStatus, string> = {
-  base: "bg-status-base",
-  pozo: "bg-status-pozo",
-  descanso: "bg-status-descanso",
-  licencia: "bg-status-licencia",
-};
+import { STATUS_DOT_CLASS } from "./statusClasses";
 
 interface ReportCalendarProps {
   reports: readonly DailyReport[];
@@ -126,7 +120,7 @@ export default function ReportCalendar({
                       {status ? (
                         <span
                           aria-hidden="true"
-                          className={`absolute bottom-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full ${DOT_CLASS[status]}`}
+                          className={`absolute bottom-1 left-1/2 size-1.5 -translate-x-1/2 rounded-full ${STATUS_DOT_CLASS[status]}`}
                         />
                       ) : null}
                     </button>

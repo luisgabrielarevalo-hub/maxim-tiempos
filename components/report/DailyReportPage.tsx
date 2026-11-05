@@ -14,6 +14,7 @@ import {
 import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
 import ReportForm from "./ReportForm";
+import ReportHistory from "./ReportHistory";
 
 const EMPTY_VALUES: ReportFormValues = {
   date: "",
@@ -202,16 +203,19 @@ export default function DailyReportPage() {
 
           <div className="pt-5">
             {today && visibleMonth ? (
-              <ReportCalendar
-                reports={reports}
-                selectedDate={selectedDate}
-                today={today}
-                visibleMonth={visibleMonth}
-                onSelectDate={handleSelectDate}
-                onPreviousMonth={handlePreviousMonth}
-                onNextMonth={handleNextMonth}
-                onToday={handleToday}
-              />
+              <>
+                <ReportCalendar
+                  reports={reports}
+                  selectedDate={selectedDate}
+                  today={today}
+                  visibleMonth={visibleMonth}
+                  onSelectDate={handleSelectDate}
+                  onPreviousMonth={handlePreviousMonth}
+                  onNextMonth={handleNextMonth}
+                  onToday={handleToday}
+                />
+                <ReportHistory reports={reports} selectedDate={selectedDate} />
+              </>
             ) : null}
           </div>
         </aside>

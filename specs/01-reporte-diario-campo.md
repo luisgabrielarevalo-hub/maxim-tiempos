@@ -77,7 +77,7 @@ Constantes:
 
 ```ts
 export const DAY_STATUSES: readonly DayStatus[] = ["base", "pozo", "descanso", "licencia"];
-export const REQUIRED_NOTES_STATUSES: readonly DayStatus[] = ["base", "pozo"];
+export const REQUIRED_NOTES_STATUSES: readonly DayStatus[] = ["base"];
 export const MAX_WELL_LENGTH = 60;
 export const MAX_ACTIVITY_LENGTH = 500;
 export const MAX_NOTES_LENGTH = 300;
@@ -131,7 +131,7 @@ Convenciones:
 - [ ] La actividad es obligatoria, acepta máximo 500 caracteres y muestra error si se excede.
 - [ ] Las observaciones aceptan máximo 300 caracteres y muestran error si se excede.
 - [ ] Los contadores muestran `n/500` y `n/300` y cambian a color destructivo al exceder el límite.
-- [ ] Las observaciones son obligatorias para `base` y `pozo`, y opcionales para `descanso` y `licencia`.
+- [ ] Las observaciones son obligatorias para `base` y opcionales para `pozo`, `descanso` y `licencia`.
 - [ ] La etiqueta de observaciones cambia entre "Obligatorio para este día" y "Opcional" según el estado.
 - [ ] Un envío válido agrega exactamente un reporte, selecciona su fecha en el calendario y muestra "Reporte completo".
 - [ ] El calendario siempre tiene 42 celdas, empieza en lunes, marca hoy y el día seleccionado, y muestra un punto del color del último estado del día.
@@ -155,6 +155,7 @@ Convenciones:
 - **Sí:** Tailwind v4 con tokens oklch en `app/globals.css`. Es la convención del proyecto y evita agregar otra capa de estilos.
 - **Sí:** calendario de 42 celdas con inicio en lunes. Reproduce el prototipo y evita saltos de altura entre meses.
 - **Sí:** un componente cliente dueño del estado (`DailyReportPage`). El formulario y el histórico comparten reportes, fecha seleccionada y mes visible.
+- **Sí:** observaciones obligatorias solo para `base`. En `pozo` la actividad ya describe el trabajo realizado, así que las observaciones quedan opcionales.
 - **Sí:** copy en español e identificadores en inglés. Es la regla del proyecto.
 - **No:** "Copiar texto" e "Imprimir / PDF". El usuario pidió quitarlas después de revisar el mock.
 - **No:** localStorage o IndexedDB. La persistencia tendrá su propio spec cuando exista backend.

@@ -23,7 +23,7 @@ export type ReportErrors = Partial<Record<ReportField, string>>;
 
 export const DAY_STATUSES: readonly DayStatus[] = ["base", "pozo", "descanso", "licencia"];
 
-export const REQUIRED_NOTES_STATUSES: readonly DayStatus[] = ["base", "pozo"];
+export const REQUIRED_NOTES_STATUSES: readonly DayStatus[] = ["base"];
 
 export const MAX_WELL_LENGTH = 60;
 export const MAX_ACTIVITY_LENGTH = 500;
@@ -137,7 +137,7 @@ export function validateReport(
     notes.length === 0
   ) {
     errors.notes =
-      "En base o en pozo hay que indicar actividades realizadas y/o pozo y nombre de registro.";
+      "En base hay que indicar actividades realizadas y/o pozo y nombre de registro.";
   }
 
   return errors;
