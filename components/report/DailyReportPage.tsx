@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  formatLongDate,
   getTodayLocal,
+  parseLocalDate,
   validateReport,
   type DailyReport,
   type DayStatus,
@@ -12,6 +12,7 @@ import {
   type ReportFormValues,
 } from "@/lib/report";
 import { CalendarIcon } from "./icons";
+import ReportCalendar from "./ReportCalendar";
 import ReportForm from "./ReportForm";
 
 const EMPTY_VALUES: ReportFormValues = {
@@ -28,13 +29,16 @@ export default function DailyReportPage() {
   const [errors, setErrors] = useState<ReportErrors>({});
   const [reports, setReports] = useState<DailyReport[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
+  const [visibleMonth, setVisibleMonth] = useState<{ year: number; monthIndex: number } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const todayLocal = getTodayLocal();
+    const todayDate = parseLocalDate(todayLocal);
     setToday(todayLocal);
     setValues((current) => ({ ...current, date: todayLocal }));
     setSelectedDate(todayLocal);
+    setVisibleMonth({ year: todayDate.getFullYear(), monthIndex: todayDate.getMonth() });
   }, []);
 
   function handleChange(field: ReportField, value: string) {
@@ -88,9 +92,48 @@ export default function DailyReportPage() {
 
     setReports((current) => [...current, report]);
     setSelectedDate(values.date);
+    const reportDate = parseLocalDate(values.date);
+    setVisibleMonth({ year: reportDate.getFullYear(), monthIndex: reportDate.getMonth() });
     setShowSuccess(true);
 
     return {};
+  }
+
+  function handleSelectDate(date: string) {
+    const parsed = parseLocalDate(date);
+    setSelectedDate(date);
+    setVisibleMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
+    setShowSuccess(false);
+  }
+
+  function handlePreviousMonth() {
+    setVisibleMonth((current) =>
+      current
+        ? {
+            year: current.monthIndex === 0 ? current.year - 1 : current.year,
+            monthIndex: (current.monthIndex + 11) % 12,
+          }
+        : current,
+    );
+  }
+
+  function handleNextMonth() {
+    setVisibleMonth((current) =>
+      current
+        ? {
+            year: current.monthIndex === 11 ? current.year + 1 : current.year,
+            monthIndex: (current.monthIndex + 1) % 12,
+          }
+        : current,
+    );
+  }
+
+  function handleToday() {
+    const todayLocal = today ?? getTodayLocal();
+    const parsed = parseLocalDate(todayLocal);
+    setSelectedDate(todayLocal);
+    setVisibleMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
+    setShowSuccess(false);
   }
 
   function handleClear() {
@@ -157,15 +200,19 @@ export default function DailyReportPage() {
             <CalendarIcon className="size-6 text-muted-foreground" />
           </header>
 
-          <div className="min-h-[420px] pt-5">
-            <p className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
-              {formatLongDate(selectedDate)}
-            </p>
-            <div className="mt-4 grid grid-cols-7 gap-2">
-              {Array.from({ length: 42 }, (_, index) => (
-                <div key={index} className="aspect-square rounded bg-muted/60" />
-              ))}
-            </div>
+          <div className="pt-5">
+            {today && visibleMonth ? (
+              <ReportCalendar
+                reports={reports}
+                selectedDate={selectedDate}
+                today={today}
+                visibleMonth={visibleMonth}
+                onSelectDate={handleSelectDate}
+                onPreviousMonth={handlePreviousMonth}
+                onNextMonth={handleNextMonth}
+                onToday={handleToday}
+              />
+            ) : null}
           </div>
         </aside>
       </main>
