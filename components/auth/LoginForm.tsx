@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   authenticate,
+  MAX_EMAIL_LENGTH,
   validateLogin,
   type LoginErrors,
   type LoginField,
@@ -102,7 +103,7 @@ export default function LoginForm() {
           type="email"
           inputMode="email"
           autoComplete="username"
-          maxLength={254}
+          maxLength={MAX_EMAIL_LENGTH}
           spellCheck={false}
           autoCapitalize="none"
           placeholder="nombre@empresa.com"
@@ -170,7 +171,7 @@ export default function LoginForm() {
           role="status"
           className={`mt-4 rounded-md border px-4 py-3.5 text-sm font-semibold ${
             notice.variant === "ok"
-              ? "border-status-descanso/40 text-status-descanso"
+              ? "border-success/40 text-success"
               : "border-destructive/40 text-destructive"
           }`}
         >

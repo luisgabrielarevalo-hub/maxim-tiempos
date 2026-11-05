@@ -10,11 +10,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`; the Next.js app is still the untouched `create-next-app` starter and has not implemented them.
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01) and the employee login at `/login` (SPEC 02); the registration screen is not implemented yet.
 
 ## Layout
 
-- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`). `@/*` maps to the repo root; there is no `src/`.
+- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`). `@/*` maps to the repo root; there is no `src/`.
+- `components/` — React components, grouped by domain (`components/auth/` holds the login screen and form).
+- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login validation and the `authenticate` stub).
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
 - `CLAUDE.md` is only `@AGENTS.md`; keep this file as the single source of instructions.
 

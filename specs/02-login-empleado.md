@@ -1,6 +1,6 @@
 # SPEC 02 — Acceso del empleado
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (reporte diario de campo)
 > **Fecha:** 2026-11-05
 > **Objetivo:** Implementar en Next.js la pantalla `/login` a partir del prototipo `Referencias/login-empleado.html`, con formulario validado de correo electrónico y contraseña, sin backend ni sesión real.
@@ -128,27 +128,27 @@ Campos:
 
 ## Criterios de aceptación
 
-- [ ] `/login` responde y muestra la pantalla de acceso en español sin errores en consola.
-- [ ] `/` sigue mostrando el reporte diario sin cambios funcionales.
-- [ ] El encabezado muestra "Bitácora de personal · Acceso", "Ingreso del empleado" y la nota con correo electrónico.
-- [ ] El panel muestra la sección "01 Credenciales" con los campos de correo y contraseña.
-- [ ] El campo de correo es `type="email"`, usa `autoComplete="username"` y limita a 254 caracteres.
-- [ ] No existen los controles "Mantener la sesión abierta" ni "¿Olvidaste tu contraseña?".
-- [ ] Enviar vacío muestra "Escribe tu correo electrónico." y "Escribe tu contraseña.", enfoca el correo y no muestra aviso de éxito.
-- [ ] Un correo con formato inválido muestra "Escribe un correo electrónico válido." y no envía.
-- [ ] Un correo válido y contraseña no vacía pasan la validación.
-- [ ] Mientras verifica, el botón queda deshabilitado y su texto es "Verificando…".
-- [ ] Tras 600 ms aparece el aviso `ok` "Acceso correcto. Bienvenido(a)." con `role="status"`.
-- [ ] Editar cualquier campo u ocultar/mostrar la contraseña descarta el aviso y los errores del campo editado.
-- [ ] El botón Ver/Ocultar alterna el tipo de la contraseña sin perder el valor y actualiza `aria-pressed` y su texto.
-- [ ] El aviso no ocupa una franja vacía cuando no hay mensaje.
-- [ ] Los campos tienen label asociado, foco visible y errores conectados con `aria-describedby`.
-- [ ] La pantalla es usable a 390×844 y se ve alineada con el prototipo a 1440×900.
-- [ ] No hay redirección, cookie, `localStorage` ni llamada de red tras un acceso válido.
-- [ ] `AGENTS.md` describe el login con correo electrónico y ya no con código de 12 caracteres.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
-- [ ] La consola no muestra errores de React ni advertencias de hidratación.
-- [ ] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
+- [x] `/login` responde y muestra la pantalla de acceso en español sin errores en consola.
+- [x] `/` sigue mostrando el reporte diario sin cambios funcionales.
+- [x] El encabezado muestra "Bitácora de personal · Acceso", "Ingreso del empleado" y la nota con correo electrónico.
+- [x] El panel muestra la sección "01 Credenciales" con los campos de correo y contraseña.
+- [x] El campo de correo es `type="email"`, usa `autoComplete="username"` y limita a 254 caracteres.
+- [x] No existen los controles "Mantener la sesión abierta" ni "¿Olvidaste tu contraseña?".
+- [x] Enviar vacío muestra "Escribe tu correo electrónico." y "Escribe tu contraseña.", enfoca el correo y no muestra aviso de éxito.
+- [x] Un correo con formato inválido muestra "Escribe un correo electrónico válido." y no envía.
+- [x] Un correo válido y contraseña no vacía pasan la validación.
+- [x] Mientras verifica, el botón queda deshabilitado y su texto es "Verificando…".
+- [x] Tras 600 ms aparece el aviso `ok` "Acceso correcto. Bienvenido(a)." con `role="status"`.
+- [x] Editar cualquier campo u ocultar/mostrar la contraseña descarta el aviso y los errores del campo editado.
+- [x] El botón Ver/Ocultar alterna el tipo de la contraseña sin perder el valor y actualiza `aria-pressed` y su texto.
+- [x] El aviso no ocupa una franja vacía cuando no hay mensaje.
+- [x] Los campos tienen label asociado, foco visible y errores conectados con `aria-describedby`.
+- [x] La pantalla es usable a 390×844 y se ve alineada con el prototipo a 1440×900.
+- [x] No hay redirección, cookie, `localStorage` ni llamada de red tras un acceso válido.
+- [x] `AGENTS.md` describe el login con correo electrónico y ya no con código de 12 caracteres.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
+- [x] La consola no muestra errores de React ni advertencias de hidratación.
+- [x] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
 
 ---
 
@@ -195,3 +195,62 @@ Campos:
 - Pruebas automatizadas.
 
 Cada uno de esos puntos, si se implementa, va en su propio spec.
+
+---
+
+## Registro de verificación
+
+**Fecha:** 2026-11-05
+**Entorno:** Next.js 16.3.4 (Turbopack), React 19.2.8, dev server del repo en `http://localhost:3000`, Chromium vía Playwright.
+**Alcance:** revisión estática de `lib/auth.ts`, `app/login/page.tsx`, `components/auth/LoginPage.tsx`, `components/auth/LoginForm.tsx`, `app/globals.css`, `app/layout.tsx`, `AGENTS.md`, más comprobación funcional en navegador.
+
+### Comandos ejecutados
+
+| Comando             | Resultado | Detalle                                                                 |
+| ------------------- | --------- | ----------------------------------------------------------------------- |
+| `npx tsc --noEmit`  | ✅ 0      | Sin salida ni errores.                                                  |
+| `npm run lint`      | ✅ 0      | `eslint` sin hallazgos.                                                 |
+| `npm run build`     | ✅ 0      | Compilación correcta; rutas estáticas `/`, `/_not-found` y `/login`.    |
+
+### Criterios
+
+| #  | Criterio                                                                 | Estado     | Evidencia                                                                                                                                                                                                 |
+| -- | ------------------------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | `/login` responde y se muestra en español sin errores                    | Verificado | HTTP 200; título "Acceso del empleado \| Bitácora de personal"; consola: 197 mensajes, 0 errores, 0 warnings.                                                                                             |
+| 2  | `/` sigue mostrando el reporte diario                                    | Verificado | HTTP 200; `h1` "Reporte diario de campo"; `app/page.tsx` sin cambios.                                                                                                                                     |
+| 3  | Encabezado con kicker, `h1` y nota de correo                             | Verificado | `components/auth/LoginPage.tsx:13-21`; snapshot de accesibilidad.                                                                                                                                         |
+| 4  | Panel "01 Credenciales" con ambos campos                                 | Verificado | `components/auth/LoginPage.tsx:26-42`, `LoginForm.tsx:94-158`.                                                                                                                                             |
+| 5  | Correo `type=email`, `autoComplete=username`, 254 caracteres             | Verificado | `LoginForm.tsx:102-107`; DOM: `type=email`, `autocomplete=username`, `maxLength=254`, `inputMode=email`, `spellcheck=false`.                                                                               |
+| 6  | Sin "Mantener la sesión abierta" ni "¿Olvidaste tu contraseña?"           | Verificado | `grep` sin coincidencias; `body.innerText` no los contiene.                                                                                                                                               |
+| 7  | Envío vacío: dos mensajes, foco en correo, sin aviso                      | Verificado | `LoginForm.tsx:68-78`; DOM: `activeId=login-email`, `aria-invalid=true` en ambos, errores exactos, `[role=status]` ausente.                                                                                |
+| 8  | Correo inválido: mensaje y no envía                                      | Verificado | `lib/auth.ts:26-27`; con `abc` aparece "Escribe un correo electrónico válido.", botón no deshabilitado, sin aviso.                                                                                         |
+| 9  | Correo válido + contraseña no vacía pasan                                | Verificado | `lib/auth.ts:18-35`; con `empleado@empresa.com` se inicia la verificación y llega el aviso `ok`.                                                                                                          |
+| 10 | Loading: botón deshabilitado y "Verificando…"                            | Verificado | `LoginForm.tsx:80-89,160-166`; durante 300 ms: `disabled=true`, texto "Verificando…"; doble `requestSubmit()` produjo un solo aviso.                                                                      |
+| 11 | Aviso `ok` a los 600 ms con `role="status"`                              | Verificado | `LoginForm.tsx:81-89,168-179`; a los 750 ms: "Acceso correcto. Bienvenido(a).", `role=status`, 1 solo nodo.                                                                                               |
+| 12 | Editar campo o alternar visibilidad limpia aviso y errores del campo     | Verificado | `LoginForm.tsx:43-61,144-147`; tras editar el correo el aviso desaparece (0 nodos); editar correo limpia su error y conserva el de contraseña.                                                            |
+| 13 | Ver/Ocultar alterna tipo, conserva valor, `aria-pressed` y texto         | Verificado | `LoginForm.tsx:131,140-151`; `password`→`text` con valor intacto, `aria-pressed=true`, texto "Ocultar"; y a la inversa.                                                                                   |
+| 14 | Sin franja vacía de aviso                                                | Verificado | `LoginForm.tsx:168` renderiza el aviso solo si `notice` existe; DOM inicial: 0 nodos `[role=status]`.                                                                                                      |
+| 15 | Labels, foco visible y `aria-describedby`                                | Verificado | `LoginForm.tsx:95-97,111-112,123-125,136-137`; Tab: correo → contraseña → Ver → Ingresar, con `box-shadow` de foco en cada control.                                                                        |
+| 16 | Usable a 390×844 y alineada a 1440×900                                   | Verificado | 390×844: `scrollWidth=390`, sin overflow horizontal; capturas comparadas con `Referencias/login-empleado.html`.                                                                                           |
+| 17 | Sin redirección, cookies, `localStorage` ni red tras acceso              | Verificado | `grep` sin `router.push`/`fetch`/`localStorage`/`document.cookie`; tras el acceso: URL `/login`, `cookie=""`, storage vacío; solo peticiones RSC de navegación.                                             |
+| 18 | `AGENTS.md` con login por correo y sin código de 12 caracteres           | Verificado | `AGENTS.md:43` ("Login requires a valid email address and a non-empty password"); sin menciones a 12 caracteres.                                                                                          |
+| 19 | `tsc`, `lint` y `build` sin errores                                      | Verificado | Ver tabla de comandos.                                                                                                                                                                                    |
+| 20 | Consola sin errores de React ni warnings de hidratación                  | Verificado | 0 errores y 0 warnings en toda la sesión; solo logs de Fast Refresh/HMR y el aviso de React DevTools.                                                                                                     |
+| 21 | Capturas 1440×900 y 390×844 en `.playwright-mcp/`                        | Verificado | `.playwright-mcp/login-1440x900.png`, `login-390x844.png`, `spec02-02…`, `spec02-03…`, `spec02-04…`, `spec02-05…`, `spec02-06…`.                                                                          |
+
+### Capturas
+
+- `.playwright-mcp/spec02-02-inicial-1440x900.png`
+- `.playwright-mcp/spec02-03-errores-vacio-1440x900.png`
+- `.playwright-mcp/spec02-04-aviso-ok-1440x900.png`
+- `.playwright-mcp/spec02-05-mobile-390x844.png`
+- `.playwright-mcp/spec02-06-mobile-aviso-390x844.png`
+- `.playwright-mcp/spec02-07-home-1440x900.png`
+- `.playwright-mcp/spec02-01-foco-teclado-1440x900.png`
+- Referencia visual: `.playwright-mcp/prototype-login-1440x900.png`, `prototype-login-390x844.png`
+
+### Observaciones menores (no bloquean)
+
+1. El aviso `ok` usa `--status-descanso` (`LoginForm.tsx:173`) en lugar de un token `--success`. El valor oklch es idéntico al del prototipo (`0.56 0.11 165`) y `globals.css` no define `--success`, así que el resultado visual es correcto.
+2. `AGENTS.md:13` conserva la frase "the Next.js app is still the untouched create-next-app starter", ya desactualizada tras SPEC 01 y SPEC 02. No afecta al criterio de login.
+3. El aviso se renderiza dentro del `<form>` y no como sección independiente; cumple el criterio de no dejar franja vacía y queda junto al botón de envío.
