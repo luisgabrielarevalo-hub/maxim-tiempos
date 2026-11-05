@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import {
+  formatLongDate,
   getTodayLocal,
+  validateReport,
+  type DailyReport,
   type DayStatus,
   type ReportErrors,
   type ReportField,
@@ -23,12 +26,15 @@ export default function DailyReportPage() {
   const [today, setToday] = useState<string | null>(null);
   const [values, setValues] = useState<ReportFormValues>(EMPTY_VALUES);
   const [errors, setErrors] = useState<ReportErrors>({});
+  const [reports, setReports] = useState<DailyReport[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const todayLocal = getTodayLocal();
     setToday(todayLocal);
     setValues((current) => ({ ...current, date: todayLocal }));
+    setSelectedDate(todayLocal);
   }, []);
 
   function handleChange(field: ReportField, value: string) {
@@ -57,6 +63,34 @@ export default function DailyReportPage() {
       return next;
     });
     setShowSuccess(false);
+  }
+
+  function handleSubmit(): ReportErrors {
+    if (!today) return {};
+
+    const nextErrors = validateReport(values, today);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setShowSuccess(false);
+      return nextErrors;
+    }
+
+    const status = values.status as DayStatus;
+    const report: DailyReport = {
+      id: crypto.randomUUID(),
+      date: values.date,
+      status,
+      well: status === "pozo" ? values.well.trim() : "",
+      activity: status === "pozo" ? values.activity.trim() : "",
+      notes: values.notes.trim(),
+    };
+
+    setReports((current) => [...current, report]);
+    setSelectedDate(values.date);
+    setShowSuccess(true);
+
+    return {};
   }
 
   function handleClear() {
@@ -99,6 +133,7 @@ export default function DailyReportPage() {
               showSuccess={showSuccess}
               onChange={handleChange}
               onStatusChange={handleStatusChange}
+              onSubmit={handleSubmit}
               onClear={handleClear}
             />
           ) : (
@@ -123,7 +158,9 @@ export default function DailyReportPage() {
           </header>
 
           <div className="min-h-[420px] pt-5">
-            <div className="h-4 w-56 rounded bg-muted" />
+            <p className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground uppercase">
+              {formatLongDate(selectedDate)}
+            </p>
             <div className="mt-4 grid grid-cols-7 gap-2">
               {Array.from({ length: 42 }, (_, index) => (
                 <div key={index} className="aspect-square rounded bg-muted/60" />

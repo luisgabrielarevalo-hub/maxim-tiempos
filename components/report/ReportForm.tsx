@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, type FormEvent } from "react";
 import {
   MAX_ACTIVITY_LENGTH,
   MAX_NOTES_LENGTH,
@@ -33,8 +34,11 @@ interface ReportFormProps {
   showSuccess: boolean;
   onChange: (field: ReportField, value: string) => void;
   onStatusChange: (status: DayStatus) => void;
+  onSubmit: () => ReportErrors;
   onClear: () => void;
 }
+
+const FIELD_ORDER: readonly ReportField[] = ["date", "status", "well", "activity", "notes"];
 
 function Counter({ length, max }: { length: number; max: number }) {
   return (
@@ -53,17 +57,34 @@ export default function ReportForm({
   showSuccess,
   onChange,
   onStatusChange,
+  onSubmit,
   onClear,
 }: ReportFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const wellRequired = values.status === "pozo";
   const notesRequired = values.status !== "" && REQUIRED_NOTES_STATUSES.includes(values.status);
   const activityLength = values.activity.trim().length;
   const notesLength = values.notes.trim().length;
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors = onSubmit();
+    const firstInvalid = FIELD_ORDER.find((field) => nextErrors[field]);
+    if (!firstInvalid || !formRef.current) return;
+
+    const target =
+      firstInvalid === "status"
+        ? formRef.current.querySelector<HTMLInputElement>('input[name="status"]')
+        : formRef.current.querySelector<HTMLElement>(`#report-${firstInvalid}`);
+
+    target?.focus();
+  }
+
   return (
     <form
+      ref={formRef}
       noValidate
-      onSubmit={(event) => event.preventDefault()}
+      onSubmit={handleSubmit}
       className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]"
     >
       <section className="border-t border-border px-5 py-6 first:border-t-0 sm:px-7">
