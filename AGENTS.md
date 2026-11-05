@@ -10,11 +10,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`; the Next.js app is still the untouched `create-next-app` starter and has not implemented them.
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01) and the employee login at `/login` (SPEC 02); the registration screen is not implemented yet.
 
 ## Layout
 
-- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`). `@/*` maps to the repo root; there is no `src/`.
+- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`). `@/*` maps to the repo root; there is no `src/`.
+- `components/` — React components, grouped by domain (`components/auth/` holds the login screen and form).
+- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login validation and the `authenticate` stub).
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
 - `CLAUDE.md` is only `@AGENTS.md`; keep this file as the single source of instructions.
 
@@ -40,7 +42,7 @@ Run from the repo root.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
 - `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
-- Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login only requires a non-empty code (max 12) and password.
+- Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login requires a valid email address and a non-empty password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
 - `registro-empleado.html` references elements that no longer exist (`generar`, `segundos`, `contar`, `regla-*`, `acepto`), so its script throws on load. Treat it as a visual reference, not a working implementation.
 - The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; there is no backend or persistence yet.
