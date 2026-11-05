@@ -27,7 +27,7 @@ export default function LoginPage({ children }: { children?: ReactNode }) {
           aria-labelledby="login-credentials-title"
           className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]"
         >
-          <div className="border-t border-border px-5 py-6 first:border-t-0 sm:px-8 sm:py-7">
+          <div className="border-t border-border px-6 py-6 first:border-t-0 sm:px-8 sm:py-7">
             <header className="mb-5 flex items-baseline gap-3">
               <span className="font-mono text-[11px] text-status-pozo">01</span>
               <h2
