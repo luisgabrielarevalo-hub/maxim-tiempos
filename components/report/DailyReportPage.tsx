@@ -65,6 +65,7 @@ export default function DailyReportPage() {
       delete next.status;
       delete next.well;
       delete next.activity;
+      delete next.notes;
       return next;
     });
     setShowSuccess(false);
