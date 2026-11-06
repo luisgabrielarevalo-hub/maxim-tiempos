@@ -71,8 +71,19 @@ export default function RegisterForm() {
     };
   }, []);
 
+  function clearFieldFeedback(field: RegisterField) {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setNotice(null);
+  }
+
   function handleChange(field: RegisterField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
+    clearFieldFeedback(field);
   }
 
   function handleCodeChange(value: string) {
@@ -313,7 +324,10 @@ export default function RegisterForm() {
                 type="button"
                 aria-pressed={showPassword}
                 aria-controls="register-password"
-                onClick={() => setShowPassword((visible) => !visible)}
+                onClick={() => {
+                  setShowPassword((visible) => !visible);
+                  clearFieldFeedback("password");
+                }}
                 className={TOGGLE_CLASS}
               >
                 {showPassword ? "Ocultar" : "Ver"}
@@ -354,9 +368,10 @@ export default function RegisterForm() {
                 type="button"
                 aria-pressed={showPasswordConfirmation}
                 aria-controls="register-password-confirmation"
-                onClick={() =>
-                  setShowPasswordConfirmation((visible) => !visible)
-                }
+                onClick={() => {
+                  setShowPasswordConfirmation((visible) => !visible);
+                  clearFieldFeedback("passwordConfirmation");
+                }}
                 className={TOGGLE_CLASS}
               >
                 {showPasswordConfirmation ? "Ocultar" : "Ver"}
