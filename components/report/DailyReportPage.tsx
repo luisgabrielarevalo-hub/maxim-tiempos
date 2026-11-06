@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+
+import type { CurrentEmployee } from "@/lib/auth";
 import {
   getTodayLocal,
   parseLocalDate,
@@ -11,6 +13,7 @@ import {
   type ReportField,
   type ReportFormValues,
 } from "@/lib/report";
+import LogoutButton from "@/components/auth/LogoutButton";
 import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
 import ReportForm from "./ReportForm";
@@ -34,7 +37,11 @@ function useTodayLocal(): string | null {
   );
 }
 
-export default function DailyReportPage() {
+export default function DailyReportPage({
+  employee,
+}: {
+  employee: CurrentEmployee | null;
+}) {
   const today = useTodayLocal();
 
   return (
@@ -54,7 +61,25 @@ export default function DailyReportPage() {
               Reporte diario de campo
             </h1>
           </div>
-         
+
+          <div className="flex w-full items-center gap-4 sm:w-auto sm:justify-end">
+            <div className="min-w-0 flex-1 text-left sm:flex-none sm:text-right">
+              <p className="font-mono text-[10px] tracking-[0.18em] uppercase opacity-70">
+                {employee ? `Código ${employee.employeeCode}` : "Sesión activa"}
+              </p>
+              {employee ? (
+                <>
+                  <p className="mt-1.5 font-display text-[22px] leading-none font-normal tracking-[0.02em]">
+                    {employee.fullName}
+                  </p>
+                  <p className="mt-1 text-[12px] leading-tight opacity-75">
+                    {employee.cargo}
+                  </p>
+                </>
+              ) : null}
+            </div>
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
