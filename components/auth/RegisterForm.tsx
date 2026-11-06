@@ -1,12 +1,20 @@
 "use client";
 
-import { useRef, useState, type ClipboardEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type FormEvent,
+} from "react";
 import {
   MAX_AREA_LENGTH,
   MAX_EMAIL_LENGTH,
   MAX_FULL_NAME_LENGTH,
   normalizeEmployeeCode,
+  registerEmployee,
   validateRegistration,
+  type EmployeeSummary,
   type RegisterErrors,
   type RegisterField,
   type RegisterFormValues,
@@ -41,6 +49,7 @@ const INITIAL_VALUES: RegisterFormValues = {
 };
 
 export default function RegisterForm() {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const areaInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +61,15 @@ export default function RegisterForm() {
   const [notice, setNotice] = useState<RegisterNotice | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   function handleChange(field: RegisterField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -78,28 +96,48 @@ export default function RegisterForm() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (isLoading || timeoutRef.current !== null) return;
+
     const nextErrors = validateRegistration(values);
     setErrors(nextErrors);
 
-    if (nextErrors.fullName) {
-      fullNameInputRef.current?.focus();
-    } else if (nextErrors.email) {
-      emailInputRef.current?.focus();
-    } else if (nextErrors.area) {
-      areaInputRef.current?.focus();
-    } else if (nextErrors.code) {
-      codeInputRef.current?.focus();
-    } else if (nextErrors.password) {
-      passwordInputRef.current?.focus();
-    } else if (nextErrors.passwordConfirmation) {
-      passwordConfirmationInputRef.current?.focus();
+    if (Object.keys(nextErrors).length > 0) {
+      if (nextErrors.fullName) {
+        fullNameInputRef.current?.focus();
+      } else if (nextErrors.email) {
+        emailInputRef.current?.focus();
+      } else if (nextErrors.area) {
+        areaInputRef.current?.focus();
+      } else if (nextErrors.code) {
+        codeInputRef.current?.focus();
+      } else if (nextErrors.password) {
+        passwordInputRef.current?.focus();
+      } else if (nextErrors.passwordConfirmation) {
+        passwordConfirmationInputRef.current?.focus();
+      }
+
+      setNotice({ variant: "mal", message: "Revisa los campos marcados." });
+      return;
     }
 
-    if (Object.keys(nextErrors).length > 0) {
-      setNotice({ variant: "mal", message: "Revisa los campos marcados." });
-    } else {
-      setNotice(null);
-    }
+    const employee: EmployeeSummary = {
+      fullName: values.fullName.trim(),
+      email: values.email.trim(),
+      area: values.area.trim(),
+      code: values.code,
+    };
+
+    setNotice(null);
+    setIsLoading(true);
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
+      const result = registerEmployee(employee);
+      setNotice({
+        variant: result.ok ? "ok" : "mal",
+        message: result.message,
+      });
+      setIsLoading(false);
+    }, 600);
   }
 
   return (
@@ -336,9 +374,10 @@ export default function RegisterForm() {
       <section className={SECTION_CLASS}>
         <button
           type="submit"
-          className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
+          disabled={isLoading}
+          className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
         >
-          Registrar empleado
+          {isLoading ? "Registrando…" : "Registrar empleado"}
         </button>
 
         {notice ? (
