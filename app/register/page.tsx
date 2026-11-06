@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import RegisterForm from "@/components/auth/RegisterForm";
 import RegisterPage from "@/components/auth/RegisterPage";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function RegisterRoute() {
-  return <RegisterPage />;
+  return (
+    <RegisterPage>
+      <RegisterForm />
+    </RegisterPage>
+  );
 }
