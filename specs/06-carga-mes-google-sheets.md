@@ -1,6 +1,6 @@
 # SPEC 06 — Carga del mes desde Google Sheets
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (reporte diario), SPEC 05 (login real y protección de rutas)
 > **Fecha:** 2026-11-06
 > **Objetivo:** al iniciar sesión, y cada vez que el empleado cambia de mes en el calendario, cargar desde la pestaña del mes de **CUADRO DE PERSONAL 2026** los días del empleado autenticado (buscado por `employee_code` en la columna A), traducir cada código al estado de la app y usar la nota de la casilla como observaciones.
@@ -610,30 +610,30 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Criterios de aceptación
 
-- [ ] Con sesión de `AVD12` y credenciales válidas, al entrar a `/` el calendario de `NOVIEMBRE` muestra descanso los días 1, 2 y 3, base el día 4 y pozo los días 5 y 6.
-- [ ] Los días 7 en adelante no muestran punto porque sus casillas están vacías.
-- [ ] Al seleccionar el día 5, el histórico muestra `En pozo`, la etiqueta `ED` y `Sin observaciones`.
-- [ ] Al seleccionar el día 1, el histórico muestra `En descanso` y la etiqueta `DE`.
-- [ ] Al seleccionar un día vacío, el histórico muestra `No hay registro para este día.`
-- [ ] Un día con `FE` no aparece ni en el calendario ni en el histórico.
-- [ ] Las notas de las casillas se muestran como observaciones (verificado con una fila con notas y, si hace falta, con una nota temporal en la fila de `AVD12`).
-- [ ] Al pasar a `OCTUBRE`, el calendario queda vacío y aparece `No encontramos tu código en la hoja de octubre.`
-- [ ] Al volver a `NOVIEMBRE`, los datos se cargan de nuevo.
-- [ ] "Hoy" vuelve al mes actual y lo carga si no estaba cargado.
-- [ ] Un clic en un día del mes vecino cambia el mes visible y dispara la carga de ese mes.
-- [ ] Con dos cambios de mes seguidos y rápidos, solo se aplica la respuesta del último mes.
-- [ ] Mientras carga, el calendario muestra `Cargando…` y no pinta puntos del mes anterior.
-- [ ] Sin `secrets/service-account.json` (o con la hoja sin compartir), `/` carga sin error 500 y muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.`
-- [ ] `loadMonthReportsAction` invocada sin sesión no devuelve datos y no lanza.
-- [ ] La acción no acepta código, nombre ni correo del cliente.
-- [ ] Un reporte generado con el formulario sigue apareciendo en el histórico y no se pierde al cambiar de mes.
-- [ ] `npm run sheets:check -- month <id con FE> 2026-11` omite los días `FE`.
-- [ ] `npm run sheets:check -- month <id con notas> 2026-11` imprime las notas de las casillas.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
-- [ ] `/` se sigue compilando como dinámica (`ƒ`).
-- [ ] La consola del navegador no muestra errores de React ni advertencias de hidratación.
-- [ ] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
-- [ ] No se añaden migraciones ni cambios de esquema.
+- [x] Con sesión de `AVD12` y credenciales válidas, al entrar a `/` el calendario de `NOVIEMBRE` muestra descanso los días 1, 2 y 3, base el día 4 y pozo los días 5 y 6.
+- [x] Los días 7 en adelante no muestran punto porque sus casillas están vacías.
+- [x] Al seleccionar el día 5, el histórico muestra `En pozo` y la etiqueta `ED`. (La hoja tiene ahora una nota en esa casilla, así que muestra la nota en vez de `Sin observaciones`; ver registro.)
+- [x] Al seleccionar el día 1, el histórico muestra `En descanso` y la etiqueta `DE`.
+- [x] Al seleccionar un día vacío, el histórico muestra `No hay registro para este día.`
+- [ ] Un día con `FE` no aparece ni en el calendario ni en el histórico. (Verificado en el comando `month` y en `statusFromSheetCode`; la fila de `AVD12` no tiene `FE` en ninguna pestaña, así que no se pudo cerrar en la interfaz.)
+- [x] Las notas de las casillas se muestran como observaciones (verificado con una fila con notas y, si hace falta, con una nota temporal en la fila de `AVD12`).
+- [ ] Al pasar a `OCTUBRE`, el calendario queda vacío y aparece `No encontramos tu código en la hoja de octubre.` (Queda vacío, pero el aviso correcto es `No hay días registrados para ti en octubre.` porque `AVD12` sí existe en `OCTUBRE!A7`; el camino "no encontrado" se verificó con `DICIEMBRE`.)
+- [x] Al volver a `NOVIEMBRE`, los datos se cargan de nuevo.
+- [x] "Hoy" vuelve al mes actual y lo carga si no estaba cargado.
+- [x] Un clic en un día del mes vecino cambia el mes visible y dispara la carga de ese mes.
+- [x] Con dos cambios de mes seguidos y rápidos, solo se aplica la respuesta del último mes.
+- [x] Mientras carga, el calendario muestra `Cargando…` y no pinta puntos del mes anterior.
+- [x] Sin `secrets/service-account.json` (o con la hoja sin compartir), `/` carga sin error 500 y muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.`
+- [x] `loadMonthReportsAction` invocada sin sesión no devuelve datos y no lanza.
+- [x] La acción no acepta código, nombre ni correo del cliente.
+- [x] Un reporte generado con el formulario sigue apareciendo en el histórico y no se pierde al cambiar de mes.
+- [x] `npm run sheets:check -- month <id con FE> 2026-01` omite los días `FE`.
+- [x] `npm run sheets:check -- month <id con notas> 2026-01` imprime las notas de las casillas.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
+- [x] `/` se sigue compilando como dinámica (`ƒ`).
+- [x] La consola del navegador no muestra errores de React ni advertencias de hidratación.
+- [x] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
+- [x] No se añaden migraciones ni cambios de esquema.
 
 ---
 
@@ -660,7 +660,7 @@ No hay migraciones ni cambios en `supabase/`.
 ## Prerrequisitos para implementar
 
 1. `.env.local` con `GOOGLE_SHEETS_SPREADSHEET_ID=13Zlnz-LzAe9xAnncw5LoKiV9ynmnuHLdgF1JtcdDcFo` (ya está).
-2. **Crear la cuenta de servicio y guardar la clave en `secrets/service-account.json`** (hoy no existe; es el bloqueo principal para verificar).
+2. **Crear la cuenta de servicio y guardar la clave en `secrets/service-account.json`** (ya existe y el libro está compartido con esa cuenta).
 3. Habilitar **Google Sheets API** en el proyecto de Google Cloud.
 4. Compartir **CUADRO DE PERSONAL 2026** con el email de la cuenta de servicio (Viewer basta para leer; Editor mantiene operativo `npm run sheets:check -- write`).
 5. Que el `employee_code` del empleado exista en la columna A de la pestaña del mes. Hoy solo `AVD12` en `NOVIEMBRE`.
@@ -683,6 +683,86 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Registro de verificación
 
-**Estado:** pendiente de implementación.
+**Estado:** implementado y verificado end-to-end con la hoja real. Quedan dos criterios que no se pueden cerrar sin editar la hoja (día `FE` en la interfaz y el aviso de `OCTUBRE`), detallados abajo.
 
-Cuando se implemente, completar esta sección con el mismo formato del SPEC 05: comandos ejecutados, tabla de criterios con evidencia, limpieza de datos temporales y observaciones no bloqueantes.
+**Entorno:** Next.js 16.3.4, build de producción (`npx next start -p 3106` y `-p 3108`), navegador Playwright. La sesión de `AVD12` se obtuvo con un magic link del Admin API de Supabase (no cambia contraseñas ni crea usuarios); `secrets/service-account.json` ya existe y el libro está compartido con la cuenta de servicio.
+
+### Comandos ejecutados
+
+```bash
+npx tsc --noEmit                  # OK
+npm run lint                      # OK
+npm run build                     # OK; rutas: ƒ / · ○ /_not-found · ƒ /login · ƒ /register
+npx next start -p 3106            # servidor con credenciales
+GOOGLE_SERVICE_ACCOUNT_KEY_FILE=<ruta inexistente> npx next start -p 3108   # servidor sin credenciales
+
+npm run sheets:check -- month AVD12 2026-11
+# CUADRO DE PERSONAL 2026 · NOVIEMBRE · AVD12 (fila 7)
+#   2026-11-01  descanso  DE
+#   2026-11-02  descanso  DE
+#   2026-11-03  descanso  DE
+#   2026-11-04  base      BA  · En IT aprendiendo
+#   2026-11-05  pozo      ED  · SFRA099 ILT
+#   2026-11-06  pozo      ED  · SFRA100 TRZ
+
+npm run sheets:check -- month 65ca8629d538a7ea6027869f 2026-01
+# ... 2026-01-16  base  BA  · SE MOVILIZA A ABRIR PERMISOS
+# ... 2026-01-23  base  BA  · CURSO DE ALTURAS
+# 2026-01-18 no aparece (T8 = FE)
+
+npm run sheets:check -- read 65ca8629d538a7ea6027869f 2026-01-18
+# código actual: "FE"
+```
+
+Comprobación externa de la Server Action sin cookies (id de acción del manifiesto):
+
+```bash
+curl -X POST http://localhost:3106/ -H "Next-Action: 60dc3203e4182db38276ac5d9bdcdf5dfd3eee7dd4" \
+  -H "Content-Type: text/plain;charset=UTF-8" -H "Accept: text/x-component" --data "[2026,10]"
+# 200 → {"month":"2026-11","reports":[],"message":"No encontramos tu ficha de empleado."}
+
+curl ... --data "[1990,15]"
+# 200 → {"month":"","reports":[],"message":"Mes no válido."}
+```
+
+### Tabla de criterios
+
+| Criterio | Estado | Evidencia |
+| --- | --- | --- |
+| Días 1–6 de `NOVIEMBRE` con descanso/base/pozo | ✅ Verificado | Playwright: cabecera `6 registros este mes · noviembre 2026`; puntos solo en 1–6 con color de descanso (1–3), base (4) y pozo (5–6). |
+| Días 7+ sin punto | ✅ Verificado | Playwright: el calendario solo tiene 6 puntos; el 7/11 muestra `No hay registro para este día.` |
+| Día 5 → `En pozo · ED` | ✅ Verificado | Playwright: `En pozo · ED` y observaciones `SFRA099 ILT` (la hoja tiene nota; ver observaciones). |
+| Día 1 → `En descanso · DE` | ✅ Verificado | Playwright: `En descanso · DE` y `Sin observaciones`. |
+| Día vacío → `No hay registro para este día.` | ✅ Verificado | Playwright: histórico del 7/11 muestra ese texto exacto. |
+| Día con `FE` omitido | ⚠️ Parcial | `ENERO T8 = "FE"` y `sheets:check -- month ... 2026-01` no imprime el 18/01; `statusFromSheetCode("FE") === "skip"`. No se pudo probar en la interfaz: `AVD12` es el único `employee_code` válido y su fila no tiene `FE` en ninguna de las 12 pestañas (barrido de `A7:AG7`); el resto de la columna A son ObjectIds que nunca coinciden con un `employee_code`. |
+| Notas como observaciones | ✅ Verificado | Playwright: 4/11 → `En IT aprendiendo`, 5/11 → `SFRA099 ILT`, 6/11 → `SFRA100 TRZ`. CLI: `ENERO` imprime `SE MOVILIZA A ABRIR PERMISOS` y `CURSO DE ALTURAS`. |
+| `OCTUBRE` vacío con aviso | ⚠️ Criterio desactualizado | Playwright: octubre carga con 0 puntos y muestra `No hay días registrados para ti en octubre.` porque `AVD12` sí existe en `OCTUBRE!A7`. El camino "no encontrado" se verificó con `DICIEMBRE`: `No encontramos tu código en la hoja de diciembre.` |
+| Volver a `NOVIEMBRE` recarga | ✅ Verificado | Playwright: al volver, `Cargando…` y luego `6 registros este mes · noviembre 2026` con los 6 puntos. |
+| "Hoy" vuelve al mes actual y carga | ✅ Verificado | Playwright: desde diciembre 2026 vuelve a noviembre 2026, selecciona el 6/11 y recarga. |
+| Clic en día del mes vecino | ✅ Verificado | Playwright: clic en 1/12 desde noviembre → mes visible diciembre 2026, carga disparada y aviso de diciembre. |
+| Dos cambios rápidos: gana la última respuesta | ✅ Verificado | Playwright: dos clics a "siguiente" con la primera petición en vuelo terminan en febrero 2027 con el aviso de febrero; ninguna respuesta vieja sobrescribe. |
+| `Cargando…` y sin puntos del mes anterior | ✅ Verificado | Durante la carga: `aria-busy="true"`, cabecera `Cargando…`, 0 puntos y sin aviso. |
+| Sin credenciales: sin 500 y aviso genérico | ✅ Verificado | Servidor `:3108` con `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` inexistente: `/` responde 200 y muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.` |
+| Acción sin sesión no devuelve datos ni lanza | ✅ Verificado | POST directo sin cookies → 200 con `reports: []` y `No encontramos tu ficha de empleado.` |
+| La acción no acepta identidad del cliente | ✅ Verificado | Firma `loadMonthReportsAction(year, monthIndex)`; la identidad sale de `getCurrentEmployee()`. |
+| Reporte del formulario sobrevive al cambio de mes | ✅ Verificado | Playwright: reporte manual del 6/11 (descanso) sigue en histórico tras ir a octubre y volver; la cabecera pasa a `7 registros` y el punto del 6/11 toma el estado manual. Al recargar se pierde, como define el spec. |
+| `sheets:check -- month` omite `FE` | ✅ Verificado | `month 65ca8629d538a7ea6027869f 2026-01` no imprime el 18/01 (`read` confirma `"FE"`). |
+| `sheets:check -- month` imprime notas | ✅ Verificado | `month AVD12 2026-11` imprime las tres notas; `month ... 2026-01` imprime las dos de `ENERO`. |
+| `tsc`, `lint` y `build` | ✅ Verificado | Los tres terminan sin errores. |
+| `/` dinámica (`ƒ`) | ✅ Verificado | Salida de `next build`. |
+| Consola sin errores ni warnings | ✅ Verificado | Playwright: 0 mensajes, 0 errores, 0 warnings. |
+| Capturas 1440×900 y 390×844 | ✅ Verificado | `.playwright-mcp/spec-06-desktop-1440x900.png`, `.playwright-mcp/spec-06-mobile-390x844.png` (regeneradas con datos reales). |
+| Sin migraciones ni cambios de esquema | ✅ Verificado | No hay archivos nuevos ni modificados en `supabase/`. |
+
+### Limpieza de datos temporales
+
+- No se creó ningún usuario de prueba: la sesión se obtuvo con `admin/generate_link` (magic link) para el usuario existente de `AVD12`, sin cambiar su contraseña. Estado final: `auth.users = 1`, `public.employees = 1` (solo `AVD12`).
+- Servidores de verificación `:3106` y `:3108` y servidor auxiliar de cookies `:3107` detenidos; scripts y archivos temporales de sesión borrados.
+- No se modificó la hoja ni se añadieron notas temporales.
+
+### Observaciones
+
+- **`OCTUBRE` contiene `AVD12` en `A7`**, aunque no tiene días marcados. Por eso el criterio que espera `No encontramos tu código en la hoja de octubre.` no se cumple con la hoja actual: el mensaje correcto es `No hay días registrados para ti en octubre.`. Conviene ajustar el criterio (o usar un mes sin el código, como `DICIEMBRE`).
+- **La fila 7 de `NOVIEMBRE` ya tiene notas** (`En IT aprendiendo`, `SFRA099 ILT`, `SFRA100 TRZ`), así que el día 5 muestra la nota en lugar de `Sin observaciones`. Es el comportamiento que pide el spec; el criterio del día 5 quedó redactado antes de que existieran esas notas.
+- **`FE` no se puede verificar en la interfaz** sin editar la hoja: solo `AVD12` es un `employee_code` válido y su fila no tiene `FE` en ninguna pestaña (barrido de `A7:AG7` en las 12). La omisión está cubierta por el comando `month` y por `statusFromSheetCode`.
+- **Contador de respuestas:** el descarte de respuestas viejas se verificó con dos cambios de mes encadenados y se apoya en `requestIdRef` (revisión de código).
