@@ -24,6 +24,9 @@ const LABEL_CLASS =
 
 const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
 
+const TOGGLE_CLASS =
+  "absolute top-1/2 right-1.5 -translate-y-1/2 rounded px-2 py-1.5 font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none";
+
 const SECTION_CLASS =
   "border-t border-border px-5 py-6 first:border-t-0 sm:px-8 sm:py-7";
 
@@ -40,6 +43,8 @@ export default function RegisterForm() {
   const [values, setValues] = useState<RegisterFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [notice, setNotice] = useState<RegisterNotice | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
   function handleChange(field: RegisterField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -218,18 +223,29 @@ export default function RegisterForm() {
             <label htmlFor="register-password" className={LABEL_CLASS}>
               Contraseña
             </label>
-            <input
-              id="register-password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Mínimo 8 caracteres"
-              value={values.password}
-              onChange={(event) => handleChange("password", event.target.value)}
-              aria-invalid={Boolean(errors.password)}
-              aria-describedby={errors.password ? "register-password-error" : undefined}
-              className={FIELD_CLASS}
-            />
+            <div className="relative">
+              <input
+                id="register-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Mínimo 8 caracteres"
+                value={values.password}
+                onChange={(event) => handleChange("password", event.target.value)}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? "register-password-error" : undefined}
+                className={`${FIELD_CLASS} pr-[74px]`}
+              />
+              <button
+                type="button"
+                aria-pressed={showPassword}
+                aria-controls="register-password"
+                onClick={() => setShowPassword((visible) => !visible)}
+                className={TOGGLE_CLASS}
+              >
+                {showPassword ? "Ocultar" : "Ver"}
+              </button>
+            </div>
             {errors.password ? (
               <p id="register-password-error" className={ERROR_CLASS}>
                 {errors.password}
@@ -241,24 +257,37 @@ export default function RegisterForm() {
             <label htmlFor="register-password-confirmation" className={LABEL_CLASS}>
               Confirmar contraseña
             </label>
-            <input
-              id="register-password-confirmation"
-              name="passwordConfirmation"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Repite la contraseña"
-              value={values.passwordConfirmation}
-              onChange={(event) =>
-                handleChange("passwordConfirmation", event.target.value)
-              }
-              aria-invalid={Boolean(errors.passwordConfirmation)}
-              aria-describedby={
-                errors.passwordConfirmation
-                  ? "register-password-confirmation-error"
-                  : undefined
-              }
-              className={FIELD_CLASS}
-            />
+            <div className="relative">
+              <input
+                id="register-password-confirmation"
+                name="passwordConfirmation"
+                type={showPasswordConfirmation ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Repite la contraseña"
+                value={values.passwordConfirmation}
+                onChange={(event) =>
+                  handleChange("passwordConfirmation", event.target.value)
+                }
+                aria-invalid={Boolean(errors.passwordConfirmation)}
+                aria-describedby={
+                  errors.passwordConfirmation
+                    ? "register-password-confirmation-error"
+                    : undefined
+                }
+                className={`${FIELD_CLASS} pr-[74px]`}
+              />
+              <button
+                type="button"
+                aria-pressed={showPasswordConfirmation}
+                aria-controls="register-password-confirmation"
+                onClick={() =>
+                  setShowPasswordConfirmation((visible) => !visible)
+                }
+                className={TOGGLE_CLASS}
+              >
+                {showPasswordConfirmation ? "Ocultar" : "Ver"}
+              </button>
+            </div>
             {errors.passwordConfirmation ? (
               <p id="register-password-confirmation-error" className={ERROR_CLASS}>
                 {errors.passwordConfirmation}
