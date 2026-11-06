@@ -10,13 +10,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01) and the employee login at `/login` (SPEC 02); the registration screen is not implemented yet.
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03).
 
 ## Layout
 
-- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`). `@/*` maps to the repo root; there is no `src/`.
-- `components/` — React components, grouped by domain (`components/auth/` holds the login screen and form).
-- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login validation and the `authenticate` stub).
+- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`). `@/*` maps to the repo root; there is no `src/`.
+- `components/` — React components, grouped by domain (`components/auth/` holds the login and registration screens and forms).
+- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation plus the `authenticate` / `registerEmployee` stubs).
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
 - `CLAUDE.md` is only `@AGENTS.md`; keep this file as the single source of instructions.
 
@@ -42,10 +42,10 @@ Run from the repo root.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
 - `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
-- Registration: employee code is exactly 5 chars, uppercase `A-Z`/`0-9`, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. Login requires a valid email address and a non-empty password.
+- Registration (`/register`): all fields are required — full name (max 120), email (max 254), area/cargo (max 80), employee code, password and confirmation. The code is exactly 5 chars, uppercase `A-Z`/`0-9`, normalized live, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. There is no acceptance checkbox, code counter/bars/rules/generator, summary card or footer. Login requires a valid email address and a non-empty password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
 - `registro-empleado.html` references elements that no longer exist (`generar`, `segundos`, `contar`, `regla-*`, `acepto`), so its script throws on load. Treat it as a visual reference, not a working implementation.
-- The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; there is no backend or persistence yet.
+- The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; the app mirrors them with `authenticate` / `registerEmployee`. There is no backend, persistence, session or network call yet.
 
 ## Tooling conventions
 
