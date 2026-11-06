@@ -4,7 +4,9 @@ import { useState, useSyncExternalStore } from "react";
 
 import type { CurrentEmployee } from "@/lib/auth";
 import {
+  daysInMonth,
   getTodayLocal,
+  monthKey,
   parseLocalDate,
   validateReport,
   type DailyReport,
@@ -37,11 +39,19 @@ function useTodayLocal(): string | null {
   );
 }
 
+interface DailyReportPageProps {
+  employee: CurrentEmployee | null;
+  initialMonth: { year: number; monthIndex: number };
+  initialReports: DailyReport[];
+  initialMessage: string | null;
+}
+
 export default function DailyReportPage({
   employee,
-}: {
-  employee: CurrentEmployee | null;
-}) {
+  initialMonth,
+  initialReports,
+  initialMessage,
+}: DailyReportPageProps) {
   const today = useTodayLocal();
 
   return (
@@ -83,7 +93,16 @@ export default function DailyReportPage({
         </div>
       </header>
 
-      {today ? <ReportWorkspace today={today} /> : <WorkspaceSkeleton />}
+      {today ? (
+        <ReportWorkspace
+          today={today}
+          initialMonth={initialMonth}
+          initialReports={initialReports}
+          initialMessage={initialMessage}
+        />
+      ) : (
+        <WorkspaceSkeleton />
+      )}
     </>
   );
 }
@@ -97,17 +116,42 @@ function WorkspaceSkeleton() {
   );
 }
 
-function ReportWorkspace({ today }: { today: string }) {
+interface ReportWorkspaceProps {
+  today: string;
+  initialMonth: { year: number; monthIndex: number };
+  initialReports: DailyReport[];
+  initialMessage: string | null;
+}
+
+function ReportWorkspace({
+  today,
+  initialMonth,
+  initialReports,
+  initialMessage,
+}: ReportWorkspaceProps) {
   const todayDate = parseLocalDate(today);
   const [values, setValues] = useState<ReportFormValues>({ ...EMPTY_VALUES, date: today });
   const [errors, setErrors] = useState<ReportErrors>({});
-  const [reports, setReports] = useState<DailyReport[]>([]);
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [visibleMonth, setVisibleMonth] = useState({
-    year: todayDate.getFullYear(),
-    monthIndex: todayDate.getMonth(),
+  const [sheetReports] = useState<DailyReport[]>(initialReports);
+  const [sessionReports, setSessionReports] = useState<DailyReport[]>([]);
+  const reports = [...sheetReports, ...sessionReports];
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const isTodayInInitialMonth =
+      todayDate.getFullYear() === initialMonth.year &&
+      todayDate.getMonth() === initialMonth.monthIndex;
+
+    if (isTodayInInitialMonth) return today;
+
+    const lastDay = daysInMonth(initialMonth.year, initialMonth.monthIndex);
+
+    return `${monthKey(initialMonth.year, initialMonth.monthIndex)}-${String(lastDay).padStart(2, "0")}`;
   });
+  const [visibleMonth, setVisibleMonth] = useState(initialMonth);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loadedMonth] = useState({
+    key: monthKey(initialMonth.year, initialMonth.monthIndex),
+    message: initialMessage,
+  });
 
   function handleChange(field: ReportField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -157,7 +201,7 @@ function ReportWorkspace({ today }: { today: string }) {
       notes: values.notes.trim(),
     };
 
-    setReports((current) => [...current, report]);
+    setSessionReports((current) => [...current, report]);
     setSelectedDate(values.date);
     const reportDate = parseLocalDate(values.date);
     setVisibleMonth({ year: reportDate.getFullYear(), monthIndex: reportDate.getMonth() });
@@ -234,6 +278,11 @@ function ReportWorkspace({ today }: { today: string }) {
             selectedDate={selectedDate}
             today={today}
             visibleMonth={visibleMonth}
+            message={
+              loadedMonth.key === monthKey(visibleMonth.year, visibleMonth.monthIndex)
+                ? loadedMonth.message
+                : null
+            }
             onSelectDate={handleSelectDate}
             onPreviousMonth={handlePreviousMonth}
             onNextMonth={handleNextMonth}

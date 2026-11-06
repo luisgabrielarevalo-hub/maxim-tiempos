@@ -16,6 +16,7 @@ interface ReportCalendarProps {
   selectedDate: string;
   today: string;
   visibleMonth: { year: number; monthIndex: number };
+  message: string | null;
   onSelectDate: (date: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
@@ -27,6 +28,7 @@ export default function ReportCalendar({
   selectedDate,
   today,
   visibleMonth,
+  message,
   onSelectDate,
   onPreviousMonth,
   onNextMonth,
@@ -75,6 +77,10 @@ export default function ReportCalendar({
           </button>
         </div>
       </div>
+
+      {message !== null ? (
+        <p className="mt-2 text-xs text-muted-foreground">{message}</p>
+      ) : null}
 
       <table
         aria-label="Calendario de jornadas"
