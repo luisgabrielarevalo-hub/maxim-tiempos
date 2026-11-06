@@ -10,13 +10,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03).
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03), which persists accounts in Supabase (SPEC 04).
 
 ## Layout
 
-- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`). `@/*` maps to the repo root; there is no `src/`.
+- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`, `register/actions.ts`). `@/*` maps to the repo root; there is no `src/`.
 - `components/` — React components, grouped by domain (`components/auth/` holds the login and registration screens and forms).
-- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation plus the `authenticate` / `registerEmployee` stubs).
+- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation plus the `authenticate` stub) and Supabase clients (`lib/supabase/admin.ts`, `server.ts`, `proxy.ts`, `env.ts`).
+- `supabase/` — `config.toml` and versioned SQL migrations. The remote schema is applied from these migrations, not from the dashboard.
+- `proxy.ts` — Next 16 proxy (replaces `middleware.ts`); refreshes the Supabase session on every request.
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
 - `CLAUDE.md` is only `@AGENTS.md`; keep this file as the single source of instructions.
 
@@ -35,6 +37,15 @@ Run from the repo root.
 - Read `node_modules/next/dist/docs/` before writing Next code; this version differs from training data.
 - Route props use generated global types such as `LayoutProps<"/">`, not hand-written prop interfaces.
 - Tailwind v4: no `tailwind.config`; design tokens live in `app/globals.css` under `@theme inline`.
+- `middleware.ts` is deprecated: session refresh lives in the root `proxy.ts` (Next 16 renamed the convention).
+
+## Supabase
+
+- Project `uvuwrtytwvfdfrpiveod`. Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (client-safe) and `SUPABASE_SECRET_KEY` (server only; never prefix it with `NEXT_PUBLIC_`). `.env.local` and Vercel need all three.
+- Registration (`/register?code=XXXXX`): the page reads and normalizes the code from `searchParams`, shows it read-only and calls `registerEmployeeAction` (`app/register/actions.ts`). The action validates server-side, checks duplicates in `public.employees`, creates the user with the Admin API (`email_confirm: true`, metadata `employee_code`, `full_name`, `cargo`), signs in with cookies and redirects to `/`.
+- Profile data lives in `public.employees` (1:1 with `auth.users`), filled by the `private.handle_new_employee()` trigger in the same transaction. RLS: authenticated users only read their own row; `anon` reads nothing. Only the secret key writes (it bypasses RLS).
+- Schema changes are versioned in `supabase/migrations/`: create with `npx supabase migration new <name>`, apply with the Supabase MCP `apply_migration`, then rename the local file to the version returned by `list_migrations`. Never edit an applied migration and never apply schema changes only from the dashboard.
+- `proxy.ts` refreshes the session (`updateSession` → `getClaims`); it does **not** protect routes. Real login and protected routes belong to SPEC 05.
 
 ## Domain rules from the prototypes
 
@@ -42,10 +53,10 @@ Run from the repo root.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
 - `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
-- Registration (`/register`): all fields are required — full name (max 120), email (max 254), area/cargo (max 80), employee code, password and confirmation. The code is exactly 5 chars, uppercase `A-Z`/`0-9`, normalized live, and must contain both a letter and a digit; password min 8 chars and confirmation must match; email format is validated. There is no acceptance checkbox, code counter/bars/rules/generator, summary card or footer. Login requires a valid email address and a non-empty password.
+- Registration (`/register?code=...`): the employee code comes from the link, is normalized to uppercase `A-Z`/`0-9`, shown read-only and must be exactly 5 chars with both a letter and a digit; a missing or invalid `code` blocks submission. All fields are required — full name (max 120), email (max 254), cargo (max 80), password and confirmation. Password min 8 chars and confirmation must match; email format is validated. There is no acceptance checkbox, code counter/bars/rules/generator, summary card or footer. Login requires a valid email address and a non-empty password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
 - `registro-empleado.html` references elements that no longer exist (`generar`, `segundos`, `contar`, `regla-*`, `acepto`), so its script throws on load. Treat it as a visual reference, not a working implementation.
-- The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; the app mirrors them with `authenticate` / `registerEmployee`. There is no backend, persistence, session or network call yet.
+- The prototypes keep data in memory only and stub `validarCredenciales` / `guardarEmpleado`; the app mirrors login with the `authenticate` stub (SPEC 05 pending) and registration with the real `registerEmployeeAction` (Supabase).
 
 ## Tooling conventions
 

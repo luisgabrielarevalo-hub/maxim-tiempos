@@ -45,23 +45,16 @@ export function authenticate(email: string, password: string): AuthResult {
 export interface RegisterFormValues {
   fullName: string;
   email: string;
-  area: string;
+  cargo: string;
   code: string;
   password: string;
   passwordConfirmation: string;
 }
 
-export interface EmployeeSummary {
-  fullName: string;
-  email: string;
-  area: string;
-  code: string;
-}
-
 export type RegisterField =
   | "fullName"
   | "email"
-  | "area"
+  | "cargo"
   | "code"
   | "password"
   | "passwordConfirmation";
@@ -69,7 +62,7 @@ export type RegisterField =
 export type RegisterErrors = Partial<Record<RegisterField, string>>;
 
 export const MAX_FULL_NAME_LENGTH = 120;
-export const MAX_AREA_LENGTH = 80;
+export const MAX_CARGO_LENGTH = 80;
 export const MIN_PASSWORD_LENGTH = 8;
 export const EMPLOYEE_CODE_LENGTH = 5;
 export const EMPLOYEE_CODE_PATTERN = /^[A-Z0-9]{5}$/;
@@ -91,7 +84,7 @@ export function validateRegistration(
   const errors: RegisterErrors = {};
   const fullName = values.fullName.trim();
   const email = values.email.trim();
-  const area = values.area.trim();
+  const cargo = values.cargo.trim();
   const code = values.code;
 
   if (!fullName) {
@@ -108,10 +101,10 @@ export function validateRegistration(
     errors.email = "Escribe un correo electrónico válido.";
   }
 
-  if (!area) {
-    errors.area = "Escribe el cargo.";
-  } else if (area.length > MAX_AREA_LENGTH) {
-    errors.area = "Máximo 80 caracteres.";
+  if (!cargo) {
+    errors.cargo = "Escribe el cargo.";
+  } else if (cargo.length > MAX_CARGO_LENGTH) {
+    errors.cargo = "Máximo 80 caracteres.";
   }
 
   if (!code) {
@@ -140,11 +133,4 @@ export function validateRegistration(
   }
 
   return errors;
-}
-
-/** Stub de demostración: siempre responde ok. Se sustituirá por el guardado real. */
-export function registerEmployee(employee: EmployeeSummary): AuthResult {
-  void employee;
-
-  return { ok: true, message: "Empleado registrado correctamente." };
 }

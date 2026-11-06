@@ -1,24 +1,26 @@
 "use client";
 
+import { useRef, useState, type FormEvent } from "react";
+
+import { registerEmployeeAction } from "@/app/register/actions";
 import {
-  useEffect,
-  useRef,
-  useState,
-  type ClipboardEvent,
-  type FormEvent,
-} from "react";
-import {
-  MAX_AREA_LENGTH,
+  EMPLOYEE_CODE_HAS_DIGIT,
+  EMPLOYEE_CODE_HAS_LETTER,
+  EMPLOYEE_CODE_PATTERN,
+  MAX_CARGO_LENGTH,
   MAX_EMAIL_LENGTH,
   MAX_FULL_NAME_LENGTH,
   normalizeEmployeeCode,
-  registerEmployee,
   validateRegistration,
-  type EmployeeSummary,
   type RegisterErrors,
   type RegisterField,
   type RegisterFormValues,
 } from "@/lib/auth";
+
+interface RegisterFormProps {
+  initialCode: string;
+  hasCodeParam: boolean;
+}
 
 interface RegisterNotice {
   variant: "ok" | "mal";
@@ -43,34 +45,37 @@ const SECTION_CLASS =
 const INITIAL_VALUES: RegisterFormValues = {
   fullName: "",
   email: "",
-  area: "",
+  cargo: "",
   code: "",
   password: "",
   passwordConfirmation: "",
 };
 
-export default function RegisterForm() {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export default function RegisterForm({
+  initialCode,
+  hasCodeParam,
+}: RegisterFormProps) {
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
-  const areaInputRef = useRef<HTMLInputElement>(null);
+  const cargoInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const passwordConfirmationInputRef = useRef<HTMLInputElement>(null);
-  const [values, setValues] = useState<RegisterFormValues>(INITIAL_VALUES);
+  const [values, setValues] = useState<RegisterFormValues>(() => ({
+    ...INITIAL_VALUES,
+    code: normalizeEmployeeCode(initialCode),
+  }));
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [notice, setNotice] = useState<RegisterNotice | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  const hasValidLink =
+    hasCodeParam &&
+    EMPLOYEE_CODE_PATTERN.test(values.code) &&
+    EMPLOYEE_CODE_HAS_LETTER.test(values.code) &&
+    EMPLOYEE_CODE_HAS_DIGIT.test(values.code);
 
   function clearFieldFeedback(field: RegisterField) {
     setErrors((current) => {
@@ -87,69 +92,55 @@ export default function RegisterForm() {
     clearFieldFeedback(field);
   }
 
-  function handleCodeChange(value: string) {
-    handleChange("code", normalizeEmployeeCode(value));
+  function focusFirstError(nextErrors: RegisterErrors) {
+    if (nextErrors.fullName) {
+      fullNameInputRef.current?.focus();
+    } else if (nextErrors.email) {
+      emailInputRef.current?.focus();
+    } else if (nextErrors.cargo) {
+      cargoInputRef.current?.focus();
+    } else if (nextErrors.code) {
+      codeInputRef.current?.focus();
+    } else if (nextErrors.password) {
+      passwordInputRef.current?.focus();
+    } else if (nextErrors.passwordConfirmation) {
+      passwordConfirmationInputRef.current?.focus();
+    }
   }
 
-  function handleCodePaste(event: ClipboardEvent<HTMLInputElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const input = event.currentTarget;
-    const start = input.selectionStart ?? input.value.length;
-    const end = input.selectionEnd ?? start;
-    const pasted = event.clipboardData.getData("text");
-    const nextValue = normalizeEmployeeCode(
-      input.value.slice(0, start) + pasted + input.value.slice(end),
-    );
-
-    handleCodeChange(nextValue);
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (isLoading || timeoutRef.current !== null) return;
+    if (isLoading || !hasValidLink) return;
 
     const nextErrors = validateRegistration(values);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      if (nextErrors.fullName) {
-        fullNameInputRef.current?.focus();
-      } else if (nextErrors.email) {
-        emailInputRef.current?.focus();
-      } else if (nextErrors.area) {
-        areaInputRef.current?.focus();
-      } else if (nextErrors.code) {
-        codeInputRef.current?.focus();
-      } else if (nextErrors.password) {
-        passwordInputRef.current?.focus();
-      } else if (nextErrors.passwordConfirmation) {
-        passwordConfirmationInputRef.current?.focus();
-      }
-
+      focusFirstError(nextErrors);
       setNotice({ variant: "mal", message: "Revisa los campos marcados." });
       return;
     }
 
-    const employee: EmployeeSummary = {
-      fullName: values.fullName.trim(),
-      email: values.email.trim(),
-      area: values.area.trim(),
-      code: values.code,
-    };
-
     setNotice(null);
     setIsLoading(true);
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
-      const result = registerEmployee(employee);
+
+    try {
+      const result = await registerEmployeeAction(values);
+
+      if (!result.ok) {
+        setErrors(result.errors ?? {});
+        setNotice({ variant: "mal", message: result.message });
+        if (result.errors) focusFirstError(result.errors);
+      }
+    } catch {
       setNotice({
-        variant: result.ok ? "ok" : "mal",
-        message: result.message,
+        variant: "mal",
+        message: "No pudimos completar el registro. Intenta de nuevo.",
       });
+    } finally {
       setIsLoading(false);
-    }, 600);
+    }
   }
 
   return (
@@ -226,27 +217,27 @@ export default function RegisterForm() {
           </div>
 
           <div className="mb-[18px] last:mb-0">
-            <label htmlFor="register-area" className={LABEL_CLASS}>
+            <label htmlFor="register-cargo" className={LABEL_CLASS}>
               Cargo
             </label>
             <input
-              ref={areaInputRef}
-              id="register-area"
-              name="area"
+              ref={cargoInputRef}
+              id="register-cargo"
+              name="cargo"
               type="text"
               required
               autoComplete="organization-title"
-              maxLength={MAX_AREA_LENGTH}
+              maxLength={MAX_CARGO_LENGTH}
               placeholder="Ej. Operaciones de pozo"
-              value={values.area}
-              onChange={(event) => handleChange("area", event.target.value)}
-              aria-invalid={Boolean(errors.area)}
-              aria-describedby={errors.area ? "register-area-error" : undefined}
+              value={values.cargo}
+              onChange={(event) => handleChange("cargo", event.target.value)}
+              aria-invalid={Boolean(errors.cargo)}
+              aria-describedby={errors.cargo ? "register-cargo-error" : undefined}
               className={FIELD_CLASS}
             />
-            {errors.area ? (
-              <p id="register-area-error" className={ERROR_CLASS}>
-                {errors.area}
+            {errors.cargo ? (
+              <p id="register-cargo-error" className={ERROR_CLASS}>
+                {errors.cargo}
               </p>
             ) : null}
           </div>
@@ -268,28 +259,40 @@ export default function RegisterForm() {
           <label htmlFor="register-code" className={LABEL_CLASS}>
             Código alfanumérico de 5 caracteres
           </label>
+          <p
+            id="register-code-help"
+            className="mb-2 font-sans text-[13px] leading-[normal] text-muted-foreground"
+          >
+            Este código viene incluido en el enlace de registro.
+          </p>
           <input
             ref={codeInputRef}
             id="register-code"
             name="code"
             type="text"
-            required
-            inputMode="text"
-            autoComplete="off"
-            spellCheck={false}
-            autoCapitalize="characters"
-            maxLength={5}
-            placeholder="AB12C"
+            readOnly
+            aria-readonly="true"
             value={values.code}
-            onChange={(event) => handleCodeChange(event.target.value)}
-            onPaste={handleCodePaste}
             aria-invalid={Boolean(errors.code)}
-            aria-describedby={errors.code ? "register-code-error" : undefined}
-            className="w-[190px] max-w-full rounded-md border border-input bg-card px-3 py-2.5 text-center font-mono text-2xl leading-[normal] font-medium tracking-[0.34em] text-foreground uppercase outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35"
+            aria-describedby={
+              errors.code
+                ? "register-code-help register-code-error"
+                : "register-code-help"
+            }
+            className="w-[190px] max-w-full cursor-not-allowed rounded-md border border-input bg-muted px-3 py-2.5 text-center font-mono text-2xl leading-[normal] font-medium tracking-[0.34em] text-muted-foreground uppercase outline-none"
           />
           {errors.code ? (
             <p id="register-code-error" className={ERROR_CLASS}>
               {errors.code}
+            </p>
+          ) : null}
+          {!hasValidLink ? (
+            <p
+              role="alert"
+              className="mt-2 text-[13px] leading-[normal] font-medium text-destructive"
+            >
+              El enlace no incluye un código de empleado válido. Solicita un
+              enlace nuevo.
             </p>
           ) : null}
         </div>
@@ -396,8 +399,8 @@ export default function RegisterForm() {
       <section className={SECTION_CLASS}>
         <button
           type="submit"
-          disabled={isLoading}
-          className="mt-5 w-full rounded-md bg-primary px-4 pt-3.5 pb-3 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+          disabled={isLoading || !hasValidLink}
+          className="mt-5 w-full rounded-md bg-primary px-4 pt-3.5 pb-3 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading ? "Registrando…" : "Registrar empleado"}
         </button>

@@ -4,6 +4,8 @@
 > **Depende de:** SPEC 02 (acceso del empleado), SPEC 01 (sistema visual)
 > **Fecha:** 2026-11-05
 > **Objetivo:** Implementar en Next.js la pantalla `/register` a partir del prototipo `Referencias/registro-empleado.html`, con datos personales, código alfanumérico de 5 caracteres y cuenta de acceso, todo validado, sin backend ni persistencia.
+>
+> **Nota de reemplazo (SPEC 04):** este spec describía un registro simulado, sin red y sin redirección. El SPEC 04 reemplaza esas decisiones: `/register` lee el código desde `?code=`, lo muestra no editable, persiste la cuenta en Supabase y deja al empleado autenticado en `/`. Las referencias a `registerEmployee` simulado y al aviso local de éxito quedan como histórico.
 
 ---
 
@@ -59,7 +61,7 @@ Se extiende `lib/auth.ts`, que ya contiene `MAX_EMAIL_LENGTH`, `EMAIL_PATTERN`, 
 export interface RegisterFormValues {
   fullName: string;
   email: string;
-  area: string;
+  cargo: string;
   code: string;
   password: string;
   passwordConfirmation: string;
@@ -68,14 +70,14 @@ export interface RegisterFormValues {
 export interface EmployeeSummary {
   fullName: string;
   email: string;
-  area: string;
+  cargo: string;
   code: string;
 }
 
 export type RegisterField =
   | "fullName"
   | "email"
-  | "area"
+  | "cargo"
   | "code"
   | "password"
   | "passwordConfirmation";
@@ -83,7 +85,7 @@ export type RegisterField =
 export type RegisterErrors = Partial<Record<RegisterField, string>>;
 
 export const MAX_FULL_NAME_LENGTH = 120;
-export const MAX_AREA_LENGTH = 80;
+export const MAX_CARGO_LENGTH = 80;
 export const MIN_PASSWORD_LENGTH = 8;
 export const EMPLOYEE_CODE_LENGTH = 5;
 export const EMPLOYEE_CODE_PATTERN = /^[A-Z0-9]{5}$/;
@@ -109,8 +111,8 @@ Reglas:
 | `email`                | Obligatorio                              | "Escribe tu correo electrónico."               |
 | `email`                | Formato `usuario@dominio.tld`            | "Escribe un correo electrónico válido."        |
 | `email`                | Máximo 254 caracteres                    | "Máximo 254 caracteres."                       |
-| `area`                 | Obligatorio                              | "Escribe el cargo."                            |
-| `area`                 | Máximo 80 caracteres                     | "Máximo 80 caracteres."                        |
+| `cargo`                | Obligatorio                              | "Escribe el cargo."                            |
+| `cargo`                | Máximo 80 caracteres                     | "Máximo 80 caracteres."                        |
 | `code`                 | Obligatorio                              | "Escribe el código de 5 caracteres."           |
 | `code`                 | Exactamente 5 caracteres                 | "El código debe tener 5 caracteres."           |
 | `code`                 | Solo `A-Z` y `0-9`                       | "El código solo admite letras y números."      |
@@ -122,7 +124,7 @@ Reglas:
 
 Convenciones:
 
-- `fullName`, `email` y `area` se recortan con `trim()` antes de validar y de enviar.
+- `fullName`, `email` y `cargo` se recortan con `trim()` antes de validar y de enviar.
 - El correo reutiliza `EMAIL_PATTERN` y `MAX_EMAIL_LENGTH` del SPEC 02; la validación es pragmática, no RFC 5322.
 - El código se normaliza en cada cambio con `normalizeEmployeeCode`, y además se revalida en el submit por si el valor llegó pegado o por autocompletado.
 - Las contraseñas se usan tal cual se escriben; los espacios son válidos. No se recortan.
@@ -227,7 +229,7 @@ No se incluyen:
 ## Decisiones tomadas y descartadas
 
 - **Sí:** ruta `/register`. Coherente con `/login` y con los identificadores en inglés.
-- **Sí:** todos los campos obligatorios, incluido el cargo. Lo pidió el usuario; el prototipo no validaba `area`.
+- **Sí:** todos los campos obligatorios, incluido el cargo. Lo pidió el usuario; el prototipo no validaba `cargo`.
 - **Sí:** mantener el código de empleado en el registro. Es un dato distinto del correo de acceso y `AGENTS.md` ya lo documenta.
 - **Sí:** solo el input en el bloque de código. El usuario descartó contador, barras, reglas y generador.
 - **Sí:** sin casilla de aceptación. El usuario descartó el control `acepto` que el script todavía referencia.
