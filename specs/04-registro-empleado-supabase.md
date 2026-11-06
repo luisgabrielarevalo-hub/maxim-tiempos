@@ -54,6 +54,8 @@ La cuenta de acceso se crea con Supabase Auth; los datos del empleado van a `pub
 
 ### Tabla
 
+> Nota: la migración inicial creó la columna como `area`; se renombró a `cargo` en migraciones posteriores (`rename_area_to_cargo` y `use_cargo_metadata`). El contrato vigente usa `cargo`.
+
 ```sql
 create table public.employees (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -63,8 +65,8 @@ create table public.employees (
     check (char_length(btrim(full_name)) between 1 and 120),
   email text not null unique
     check (email = lower(email)),
-  area text not null
-    check (char_length(btrim(area)) between 1 and 80),
+  cargo text not null
+    check (char_length(btrim(cargo)) between 1 and 80),
   created_at timestamptz not null default now()
 );
 
@@ -93,13 +95,13 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.employees (id, employee_code, full_name, email, area)
+  insert into public.employees (id, employee_code, full_name, email, cargo)
   values (
     new.id,
     new.raw_user_meta_data ->> 'employee_code',
     new.raw_user_meta_data ->> 'full_name',
     lower(new.email),
-    new.raw_user_meta_data ->> 'area'
+    new.raw_user_meta_data ->> 'cargo'
   );
   return new;
 end;
@@ -166,7 +168,7 @@ Flujo:
 2. Consultar `employees` por `employee_code` y por `email` con el cliente admin:
    - código ocupado → `errors.code = "Ese código ya está registrado."`
    - correo ocupado → `errors.email = "Ese correo ya está registrado."`
-3. `admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { employee_code, full_name, area } })`.
+3. `admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { employee_code, full_name, cargo } })`.
 4. `supabase.auth.signInWithPassword({ email, password })` con el cliente de cookies.
 5. `redirect("/")`.
 
@@ -271,7 +273,7 @@ Dependencias fijadas: `@supabase/ssr@0.12.7` y `@supabase/supabase-js@2.119.0` (
 - [ ] El campo de código es `readOnly`, no acepta teclado ni pegado y sigue enviándose.
 - [ ] `/register` sin `code` muestra el aviso de enlace inválido y no permite enviar.
 - [ ] `/register?code=ABC` muestra el aviso de enlace inválido y no permite enviar.
-- [ ] Un envío válido crea un usuario en `auth.users` y una fila en `public.employees` con el mismo `id`, `employee_code`, `full_name`, `email` y `area`.
+- [ ] Un envío válido crea un usuario en `auth.users` y una fila en `public.employees` con el mismo `id`, `employee_code`, `full_name`, `email` y `cargo`.
 - [ ] El código se guarda en mayúsculas y sin caracteres inválidos.
 - [ ] La contraseña no aparece en `employees`, en logs ni en metadata.
 - [ ] Un código ya registrado responde "Ese código ya está registrado." sin crear usuario.
@@ -298,7 +300,7 @@ Dependencias fijadas: `@supabase/ssr@0.12.7` y `@supabase/supabase-js@2.119.0` (
 | Cualquiera con un código con formato válido puede registrarse | El código viaja en un enlace privado y es único; a futuro, tabla de códigos válidos. |
 | Spam de registros sin rate limit | Aceptado en este spec; se puede añadir límite en el servidor después. |
 | Usuario creado y login automático falla | Mensaje claro y ruta a `/login`; el usuario ya existe y puede entrar manualmente. |
-| El trigger bloquea futuros usuarios creados sin metadata | Documentado; cualquier alta futura debe enviar `employee_code`, `full_name` y `area`. |
+| El trigger bloquea futuros usuarios creados sin metadata | Documentado; cualquier alta futura debe enviar `employee_code`, `full_name` y `cargo`. |
 | Pruebas E2E crean usuarios reales | Usar correo y código desechables y borrarlos al final con la Admin API. |
 | El código queda en el historial del navegador | No es un secreto de autenticación; se documenta y no se registra en logs. |
 | El archivo local y la versión remota de la migración se desalinean | Renombrar el archivo con la versión devuelta por `apply_migration`/`list_migrations` y verificar el historial antes de commitear. |

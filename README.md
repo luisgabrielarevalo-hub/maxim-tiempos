@@ -58,6 +58,42 @@ npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
 
 Código: `lib/sheets/client.ts` (auth + API) y `lib/sheets/layout.ts` (pestañas, columnas, empleados, lectura y escritura de un día).
 
+## Supabase
+
+El registro de empleados (`/register?code=XXXXX`) persiste en Supabase.
+
+### Variables
+
+| Variable | Uso |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto (`https://uvuwrtytwvfdfrpiveod.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública, puede ir al cliente |
+| `SUPABASE_SECRET_KEY` | Clave secreta, **solo servidor** (nunca con prefijo `NEXT_PUBLIC_`) |
+
+Copia `.env.example` a `.env.local` y añade la secret key desde Dashboard → Settings → API Keys. En Vercel configura las tres variables.
+
+### Flujo de registro
+
+1. El enlace de registro incluye `?code=AB12C`; el formulario lo normaliza y lo muestra en un campo no editable.
+2. `app/register/actions.ts` valida en el servidor, comprueba duplicados y crea el usuario con la Admin API (`email_confirm: true`).
+3. El trigger `private.handle_new_employee()` inserta el perfil en `public.employees` en la misma transacción.
+4. La acción inicia sesión con cookies (`@supabase/ssr`) y redirige a `/`.
+5. `proxy.ts` refresca la sesión en cada petición.
+
+Si falta el `code` o no tiene 5 caracteres con letra y dígito, el formulario muestra un aviso y bloquea el envío.
+
+### Migraciones
+
+```bash
+npx supabase migration new <nombre>
+```
+
+Se aplican con el MCP de Supabase (`apply_migration`) usando el mismo SQL del archivo; después el archivo local se renombra con la versión que devuelve `list_migrations`. El historial vive en `supabase_migrations.schema_migrations`. No se edita una migración ya aplicada ni se aplica esquema solo desde el dashboard.
+
+### Alcance
+
+`/login` sigue usando el stub `authenticate()` y las rutas no están protegidas. El login real, el logout y la protección de rutas corresponden al SPEC 05.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
