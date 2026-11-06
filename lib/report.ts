@@ -7,6 +7,25 @@ export interface DailyReport {
   well: string;
   activity: string;
   notes: string;
+  /** Código original de la hoja (DE, BA, ED…). Ausente en reportes manuales. */
+  code?: string;
+}
+
+export type SheetDayStatus = DayStatus | "skip";
+
+const SHEET_STATUS_CODES: Record<string, DayStatus> = {
+  DE: "descanso",
+  BA: "base",
+  LI: "licencia",
+};
+
+/** Traduce el código de una casilla. Vacío y FE se omiten. */
+export function statusFromSheetCode(raw: string): SheetDayStatus {
+  const code = raw.trim().toUpperCase();
+
+  if (!code || code === "FE") return "skip";
+
+  return SHEET_STATUS_CODES[code] ?? "pozo";
 }
 
 export interface ReportFormValues {
@@ -75,6 +94,16 @@ export function formatLongDate(iso: string): string {
 export function parseLocalDate(iso: string): Date {
   const [year = 1970, month = 1, day = 1] = iso.split("-").map(Number);
   return new Date(year, month - 1, day);
+}
+
+/** Días del mes (28–31). `monthIndex` es cero-based. */
+export function daysInMonth(year: number, monthIndex: number): number {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+/** Clave estable del mes: `YYYY-MM`. */
+export function monthKey(year: number, monthIndex: number): string {
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
 /**
