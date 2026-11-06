@@ -1,6 +1,6 @@
 # SPEC 05 — Login real y protección de rutas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (reporte diario), SPEC 02 (acceso del empleado), SPEC 04 (registro en Supabase)
 > **Reemplaza:** las decisiones del SPEC 02 sobre "sin backend, sesión ni redirección" y la nota del SPEC 04 que deja el login real, el logout y las rutas protegidas para un spec futuro.
 > **Fecha:** 2026-11-06
@@ -391,31 +391,31 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Criterios de aceptación
 
-- [ ] Sin sesión, `GET /` responde `307` a `/login?next=%2F`.
-- [ ] Sin sesión, cualquier ruta privada (por ejemplo `/reportes`) redirige a `/login` con `next`.
-- [ ] Sin sesión, `/register?code=AB12C` sigue siendo accesible y no redirige.
-- [ ] Con sesión, `GET /login` redirige a `/`.
-- [ ] Un login válido crea las cookies `sb-*-auth-token` y llega a `/` (o al `next` saneado).
-- [ ] Un login válido desde `/login?next=%2F` aterriza en `/`, no en `/login`.
-- [ ] Credenciales inválidas muestran "Correo o contraseña incorrectos." sin crear cookies de sesión.
-- [ ] Un correo inexistente y una contraseña incorrecta muestran exactamente el mismo mensaje.
-- [ ] Mientras la acción está en curso, el botón queda deshabilitado y su texto es "Verificando…".
-- [ ] Editar un campo limpia su error y el aviso; el foco va al primer campo inválido.
-- [ ] `next=https://evil.com`, `next=//evil.com`, `next=/\evil.com`, `next=/login` y `next` vacío redirigen a `/`.
-- [ ] Los redirects del proxy conservan las cookies refrescadas; la sesión no se pierde al navegar.
-- [ ] Un `POST` de Server Action no es redirigido por el proxy (solo `GET`/`HEAD`).
-- [ ] Tras "Salir", las cookies se borran, se llega a `/login?signedOut=1` y se muestra "Cerraste sesión correctamente.".
-- [ ] Tras "Salir", `GET /` vuelve a redirigir a `/login`.
-- [ ] El header del reporte muestra código, nombre y cargo del empleado autenticado.
-- [ ] Si el usuario autenticado no tiene fila en `employees`, el reporte sigue cargando sin bucle y el header muestra "Sesión activa".
-- [ ] `requireSession()` protege `/` aunque el proxy no intervenga.
-- [ ] `authenticate()` y `AuthResult` ya no existen en el repositorio.
-- [ ] La contraseña no aparece en logs, cookies legibles ni respuestas de la acción.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
-- [ ] `/` y `/login` se compilan como dinámicas (`ƒ`).
-- [ ] La consola no muestra errores de React ni advertencias de hidratación.
-- [ ] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
-- [ ] Los usuarios de prueba se eliminan al final y `auth.users` / `public.employees` quedan como estaban.
+- [x] Sin sesión, `GET /` responde `307` a `/login?next=%2F`.
+- [x] Sin sesión, cualquier ruta privada (por ejemplo `/reportes`) redirige a `/login` con `next`.
+- [x] Sin sesión, `/register?code=AB12C` sigue siendo accesible y no redirige.
+- [x] Con sesión, `GET /login` redirige a `/`.
+- [x] Un login válido crea las cookies `sb-*-auth-token` y llega a `/` (o al `next` saneado).
+- [x] Un login válido desde `/login?next=%2F` aterriza en `/`, no en `/login`.
+- [x] Credenciales inválidas muestran "Correo o contraseña incorrectos." sin crear cookies de sesión.
+- [x] Un correo inexistente y una contraseña incorrecta muestran exactamente el mismo mensaje.
+- [x] Mientras la acción está en curso, el botón queda deshabilitado y su texto es "Verificando…".
+- [x] Editar un campo limpia su error y el aviso; el foco va al primer campo inválido.
+- [x] `next=https://evil.com`, `next=//evil.com`, `next=/\evil.com`, `next=/login` y `next` vacío redirigen a `/`.
+- [x] Los redirects del proxy conservan las cookies refrescadas; la sesión no se pierde al navegar.
+- [x] Un `POST` de Server Action no es redirigido por el proxy (solo `GET`/`HEAD`).
+- [x] Tras "Salir", las cookies se borran, se llega a `/login?signedOut=1` y se muestra "Cerraste sesión correctamente.".
+- [x] Tras "Salir", `GET /` vuelve a redirigir a `/login`.
+- [x] El header del reporte muestra código, nombre y cargo del empleado autenticado.
+- [x] Si el usuario autenticado no tiene fila en `employees`, el reporte sigue cargando sin bucle y el header muestra "Sesión activa".
+- [x] `requireSession()` protege `/` aunque el proxy no intervenga.
+- [x] `authenticate()` y `AuthResult` ya no existen en el repositorio.
+- [x] La contraseña no aparece en logs, cookies legibles ni respuestas de la acción.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
+- [x] `/` y `/login` se compilan como dinámicas (`ƒ`).
+- [x] La consola no muestra errores de React ni advertencias de hidratación.
+- [x] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
+- [x] Los usuarios de prueba se eliminan al final y `auth.users` / `public.employees` quedan como estaban.
 
 ---
 
@@ -462,6 +462,56 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Registro de verificación
 
-**Estado:** Pendiente de implementación.
+**Fecha:** 2026-11-06
+**Entorno:** Windows, Next.js 16.3.4, proyecto Supabase `uvuwrtytwvfdfrpiveod`. Flujos con dev server en `http://localhost:3000` y comprobación de logs con `next start` en `http://localhost:3001`.
+**Secretos:** `SUPABASE_SECRET_KEY` presente en `.env.local` (valor enmascarado; no se expone en este registro).
 
-Se completará con la fecha, el entorno, los comandos ejecutados, la tabla de criterios con evidencia y la limpieza de usuarios de prueba, siguiendo el formato del SPEC 04.
+### Comandos
+
+| Comando | Resultado |
+| --- | --- |
+| `npx tsc --noEmit` | ✅ exit 0, sin errores |
+| `npm run lint` | ✅ exit 0, sin avisos |
+| `npm run build` | ✅ exit 0; `ƒ /`, `ƒ /login` y `ƒ /register` compiladas como dinámicas |
+
+### Criterios
+
+| Criterio | Estado | Evidencia |
+| --- | --- | --- |
+| Sin sesión, `GET /` → `307 /login?next=%2F` | ✅ Verificado | `curl -D -`: `HTTP/1.1 307 Temporary Redirect` + `location: /login?next=%2F`. |
+| Sin sesión, ruta privada (`/reportes`) → `/login` con `next` | ✅ Verificado | `location: /login?next=%2Freportes`; `proxy.ts:33`. |
+| Sin sesión, `/register?code=AB12C` accesible | ✅ Verificado | `HTTP/1.1 200`, sin `location`. |
+| Con sesión, `GET /login` → `/` | ✅ Verificado | Playwright: `goto /login` termina en `http://localhost:3000/`; `proxy.ts:42`. |
+| Login válido crea `sb-*-auth-token` y llega a `/` | ✅ Verificado | Cookie `sb-uvuwrtytwvfdfrpiveod-auth-token`; URL final `/`; `actions/auth.ts:57-69`. |
+| Login desde `/login?next=%2F` aterriza en `/` | ✅ Verificado | Playwright: `/login?next=%2F` → `/`. |
+| Credenciales inválidas: mensaje y sin cookies | ✅ Verificado | "Correo o contraseña incorrectos."; `context.cookies()` = `[]`; `actions/auth.ts:27-36,63`. |
+| Correo inexistente = contraseña incorrecta | ✅ Verificado | Ambos casos devuelven exactamente "Correo o contraseña incorrectos." (mismo `invalid_credentials`). |
+| "Verificando…" y botón deshabilitado | ✅ Verificado | `{text:"Verificando…", disabled:true}` leído justo tras el clic; `05-login-verificando-1440x900.png`. |
+| Editar limpia error/aviso y foco al primer inválido | ✅ Verificado | Envío vacío → `document.activeElement.id = "login-email"`; al escribir, `#login-email-error` desaparece. |
+| `next` peligrosos → `/` | ✅ Verificado | `https://evil.com`, `//evil.com`, `/\evil.com`, `/login` y vacío: los cinco aterrizan en `/`; `lib/auth.ts:16-29`. |
+| Redirects conservan cookies; sesión estable | ✅ Verificado | Tras el login, varias navegaciones y el redirect `/login` → `/` mantienen la cookie sin reautenticar; `proxy.ts:17-23`. |
+| `POST` de Server Action no redirigido | ✅ Verificado | `POST /reportes` → `404` (vs `GET` → `307`); `POST /` ejecuta `ƒ logoutAction()` y responde `200`; `proxy.ts:26`. |
+| Logout: cookies borradas, aviso y `/` vuelve a redirigir | ✅ Verificado | URL `/login?signedOut=1`, `cookies=[]`, aviso "Cerraste sesión correctamente."; después `GET /` → `307 /login?next=%2F`. |
+| Header con código, nombre y cargo | ✅ Verificado | Banner: `CÓDIGO Q7W2E` / `Empleado Spec Cinco` / `Operador de campo` / `SALIR`. |
+| Sin fila en `employees`: "Sesión activa", sin bucle | ✅ Verificado | Fila borrada vía SQL; `/` carga y el header muestra `SESIÓN ACTIVA`; `session.ts:28-48`. |
+| `requireSession()` protege `/` | ✅ Verificado | `app/page.tsx:16` (`await requireSession()`); `session.ts:19-25`. |
+| `authenticate()` y `AuthResult` fuera del repo | ✅ Verificado | `grep` sobre `*.ts`/`*.tsx`: 0 coincidencias (solo quedan menciones históricas en los SPEC 02/03). |
+| La contraseña no aparece en logs, cookies ni respuestas | ✅ Verificado | Producción (`next start`): 0 líneas de log con la acción; cookies solo con el JWT; las respuestas solo llevan `message`/`errors`. En `next dev` Next imprime los argumentos de las Server Actions: ver observaciones. |
+| `tsc`, `lint` y `build` pasan | ✅ Verificado | Ver tabla de comandos. |
+| `/` y `/login` dinámicas (`ƒ`) | ✅ Verificado | Salida de `next build`. |
+| Consola sin errores de React ni hidratación | ✅ Verificado | 47 mensajes, 0 errores y 0 warnings en todo el recorrido. |
+| Capturas 1440×900 y 390×844 | ✅ Verificado | `05-login-1440x900.png`, `05-login-390x844.png`, `05-login-signedout-1440x900.png`, `05-login-signedout-390x844.png`, `05-reporte-1440x900.png`, `05-reporte-390x844.png`, `05-reporte-sin-fila-1440x900.png`, `05-login-verificando-1440x900.png`. |
+| Usuarios de prueba eliminados | ✅ Verificado | `auth.users = 1`, `public.employees = 1` (`AVD12`), igual que al inicio. |
+
+### Limpieza
+
+Se crearon dos cuentas desechables vía `/register?code=…` (`Q7W2E` y `M4N8P`). Ambas se borraron con SQL sobre `auth.users` (cascade a `public.employees`). Verificación final: `auth.users = 1`, `public.employees = 1`, sin correos `spec05.*`.
+
+### Observaciones (no bloqueantes)
+
+- **Logs de desarrollo:** `next dev` imprime los argumentos de cada Server Action, incluida la contraseña (`└─ ƒ loginAction({...})`). Es instrumentación solo de desarrollo: con `next start` no se registra nada y la acción nunca escribe logs. Riesgo aceptado; no se cambia el contrato de `loginAction` por ello.
+- **Cookie no `HttpOnly`:** la cookie `sb-*-auth-token` sale con `httpOnly=false` por defecto en `@supabase/ssr` (el cliente necesita leerla). La tabla de riesgos asume `HttpOnly`; no se tocan las opciones a mano, como pide el spec. La contraseña nunca viaja en la cookie.
+- **Advisors (security):** solo el aviso preexistente `auth_leaked_password_protection` (WARN). Este spec no cambia el esquema, así que no introduce hallazgos nuevos.
+- `POST /` sin cabecera de Server Action devuelve `307 /login`: no lo produce el proxy (que solo redirige `GET`/`HEAD`), sino `requireSession()` al renderizar la página.
+- Durante las pruebas manuales el dev server registró credenciales reales en su log local; no se incluyen en este registro y conviene no compartir ese archivo.
+- **Pendiente para un spec futuro:** con sesión activa, `/register` sigue sirviéndose (decisión de este spec). Tiene sentido expulsar a `/` igual que `/login`; queda anotado como posible SPEC 06 y no se implementa aquí para no invalidar la verificación.
