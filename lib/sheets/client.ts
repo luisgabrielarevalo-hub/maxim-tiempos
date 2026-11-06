@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { JWT } from "google-auth-library";
 
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
@@ -33,6 +35,21 @@ export interface ValueRange {
   range?: string;
   majorDimension?: string;
   values?: string[][];
+}
+
+export interface GridCell {
+  value: string;
+  note: string;
+}
+
+interface GridDataResponse {
+  sheets?: {
+    data?: {
+      rowData?: {
+        values?: { formattedValue?: string; note?: string }[];
+      }[];
+    }[];
+  }[];
 }
 
 interface ServiceAccountCredentials {
@@ -124,6 +141,7 @@ async function request<T>(
 
   const response = await fetch(`${API_BASE}/${path}`, {
     ...init,
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -155,6 +173,29 @@ export async function getValues(range: string): Promise<string[][]> {
   );
 
   return data.values ?? [];
+}
+
+/**
+ * Valores y notas de una fila en una sola llamada. El índice 0 corresponde a
+ * la primera columna del rango.
+ */
+export async function getRowCells(range: string): Promise<GridCell[]> {
+  const query = new URLSearchParams({
+    ranges: range,
+    includeGridData: "true",
+    fields: "sheets.data.rowData.values(formattedValue,note)",
+  });
+
+  const data = await request<GridDataResponse>(
+    `${getSpreadsheetId()}?${query.toString()}`,
+  );
+
+  const values = data.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values ?? [];
+
+  return values.map((cell) => ({
+    value: (cell.formattedValue ?? "").trim(),
+    note: (cell.note ?? "").trim(),
+  }));
 }
 
 export async function updateValues(
