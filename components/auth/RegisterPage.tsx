@@ -10,7 +10,7 @@ export default function RegisterPage({ children }: { children?: ReactNode }) {
 
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto w-full max-w-[680px] px-4 pt-8 pb-[26px]">
-          <p className="font-mono text-[11px] tracking-[0.24em] uppercase opacity-70">
+          <p className="font-mono text-[11px] leading-[normal] tracking-[0.24em] uppercase opacity-70">
             Bitácora de personal · Registro
           </p>
           <h1 className="mt-1.5 font-display text-[clamp(40px,8vw,54px)] leading-[0.9] font-normal tracking-[0.02em]">

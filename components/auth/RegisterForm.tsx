@@ -26,15 +26,16 @@ interface RegisterNotice {
 }
 
 const FIELD_CLASS =
-  "w-full rounded-md border border-input bg-card px-3 py-2.5 font-sans text-[15px] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35";
+  "w-full rounded-md border border-input bg-card px-3 py-[11px] font-sans text-[15px] leading-[normal] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35";
 
 const LABEL_CLASS =
-  "mb-1.5 block font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase";
+  "mb-1.5 block font-mono text-[10px] leading-[normal] tracking-[0.18em] text-muted-foreground uppercase";
 
-const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
+const ERROR_CLASS =
+  "mt-1.5 text-[13px] leading-[normal] font-medium text-destructive";
 
 const TOGGLE_CLASS =
-  "absolute top-1/2 right-1.5 -translate-y-1/2 rounded px-2 py-1.5 font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none";
+  "absolute top-1/2 right-1.5 -translate-y-1/2 rounded px-2 py-1.5 font-mono text-[10px] leading-[normal] tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none";
 
 const SECTION_CLASS =
   "border-t border-border px-5 py-6 first:border-t-0 sm:px-8 sm:py-7";
@@ -284,7 +285,7 @@ export default function RegisterForm() {
             onPaste={handleCodePaste}
             aria-invalid={Boolean(errors.code)}
             aria-describedby={errors.code ? "register-code-error" : undefined}
-            className="w-[190px] max-w-full rounded-md border border-input bg-card px-3 py-2.5 text-center font-mono text-2xl font-medium tracking-[0.34em] text-foreground uppercase outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35"
+            className="w-[190px] max-w-full rounded-md border border-input bg-card px-3 py-2.5 text-center font-mono text-2xl leading-[normal] font-medium tracking-[0.34em] text-foreground uppercase outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35"
           />
           {errors.code ? (
             <p id="register-code-error" className={ERROR_CLASS}>
@@ -396,7 +397,7 @@ export default function RegisterForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+          className="mt-5 w-full rounded-md bg-primary px-4 pt-3.5 pb-3 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
         >
           {isLoading ? "Registrando…" : "Registrar empleado"}
         </button>
