@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import {
-  MAX_AREA_LENGTH,
+  MAX_CARGO_LENGTH,
   MAX_EMAIL_LENGTH,
   MAX_FULL_NAME_LENGTH,
   normalizeEmployeeCode,
@@ -43,7 +43,7 @@ const SECTION_CLASS =
 const INITIAL_VALUES: RegisterFormValues = {
   fullName: "",
   email: "",
-  area: "",
+  cargo: "",
   code: "",
   password: "",
   passwordConfirmation: "",
@@ -53,7 +53,7 @@ export default function RegisterForm() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullNameInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
-  const areaInputRef = useRef<HTMLInputElement>(null);
+  const cargoInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const passwordConfirmationInputRef = useRef<HTMLInputElement>(null);
@@ -118,8 +118,8 @@ export default function RegisterForm() {
         fullNameInputRef.current?.focus();
       } else if (nextErrors.email) {
         emailInputRef.current?.focus();
-      } else if (nextErrors.area) {
-        areaInputRef.current?.focus();
+      } else if (nextErrors.cargo) {
+        cargoInputRef.current?.focus();
       } else if (nextErrors.code) {
         codeInputRef.current?.focus();
       } else if (nextErrors.password) {
@@ -135,7 +135,7 @@ export default function RegisterForm() {
     const employee: EmployeeSummary = {
       fullName: values.fullName.trim(),
       email: values.email.trim(),
-      area: values.area.trim(),
+      cargo: values.cargo.trim(),
       code: values.code,
     };
 
@@ -226,27 +226,27 @@ export default function RegisterForm() {
           </div>
 
           <div className="mb-[18px] last:mb-0">
-            <label htmlFor="register-area" className={LABEL_CLASS}>
+            <label htmlFor="register-cargo" className={LABEL_CLASS}>
               Cargo
             </label>
             <input
-              ref={areaInputRef}
-              id="register-area"
-              name="area"
+              ref={cargoInputRef}
+              id="register-cargo"
+              name="cargo"
               type="text"
               required
               autoComplete="organization-title"
-              maxLength={MAX_AREA_LENGTH}
+              maxLength={MAX_CARGO_LENGTH}
               placeholder="Ej. Operaciones de pozo"
-              value={values.area}
-              onChange={(event) => handleChange("area", event.target.value)}
-              aria-invalid={Boolean(errors.area)}
-              aria-describedby={errors.area ? "register-area-error" : undefined}
+              value={values.cargo}
+              onChange={(event) => handleChange("cargo", event.target.value)}
+              aria-invalid={Boolean(errors.cargo)}
+              aria-describedby={errors.cargo ? "register-cargo-error" : undefined}
               className={FIELD_CLASS}
             />
-            {errors.area ? (
-              <p id="register-area-error" className={ERROR_CLASS}>
-                {errors.area}
+            {errors.cargo ? (
+              <p id="register-cargo-error" className={ERROR_CLASS}>
+                {errors.cargo}
               </p>
             ) : null}
           </div>
