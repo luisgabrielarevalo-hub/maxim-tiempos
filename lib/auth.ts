@@ -51,13 +51,6 @@ export interface RegisterFormValues {
   passwordConfirmation: string;
 }
 
-export interface EmployeeSummary {
-  fullName: string;
-  email: string;
-  cargo: string;
-  code: string;
-}
-
 export type RegisterField =
   | "fullName"
   | "email"
