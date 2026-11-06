@@ -1,18 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+
+import { loginAction } from "@/app/actions/auth";
 import {
-  authenticate,
   MAX_EMAIL_LENGTH,
   validateLogin,
   type LoginErrors,
   type LoginField,
 } from "@/lib/auth";
 
+interface LoginFormProps {
+  nextPath: string;
+  signedOut?: boolean;
+}
+
 interface LoginNotice {
   variant: "ok" | "mal";
   message: string;
 }
+
+const SIGNED_OUT_NOTICE: LoginNotice = {
+  variant: "ok",
+  message: "Cerraste sesión correctamente.",
+};
+
+const GENERIC_ERROR = "No pudimos iniciar sesión. Intenta de nuevo.";
 
 const FIELD_CLASS =
   "w-full rounded-md border border-input bg-card px-3 py-2.5 font-mono text-[15px] tracking-[0.04em] text-foreground outline-none transition-[border-color,box-shadow] placeholder:font-sans placeholder:tracking-normal placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35";
@@ -22,8 +35,10 @@ const LABEL_CLASS =
 
 const ERROR_CLASS = "mt-1.5 text-[13px] font-medium text-destructive";
 
-export default function LoginForm() {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export default function LoginForm({
+  nextPath,
+  signedOut = false,
+}: LoginFormProps) {
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
@@ -31,15 +46,9 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
-  const [notice, setNotice] = useState<LoginNotice | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  const [notice, setNotice] = useState<LoginNotice | null>(
+    signedOut ? SIGNED_OUT_NOTICE : null,
+  );
 
   function clearFieldFeedback(field: LoginField) {
     setErrors((current) => {
@@ -61,33 +70,43 @@ export default function LoginForm() {
     clearFieldFeedback("password");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function focusFirstError(nextErrors: LoginErrors) {
+    if (nextErrors.email) {
+      emailInputRef.current?.focus();
+    } else if (nextErrors.password) {
+      passwordInputRef.current?.focus();
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isLoading || timeoutRef.current !== null) return;
+    if (isLoading) return;
 
     const nextErrors = validateLogin({ email, password });
     setErrors(nextErrors);
     setNotice(null);
 
-    if (nextErrors.email) {
-      emailInputRef.current?.focus();
-      return;
-    } else if (nextErrors.password) {
-      passwordInputRef.current?.focus();
+    if (Object.keys(nextErrors).length > 0) {
+      focusFirstError(nextErrors);
       return;
     }
 
     setIsLoading(true);
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
-      const result = authenticate(email.trim(), password);
-      setNotice({
-        variant: result.ok ? "ok" : "mal",
-        message: result.message,
-      });
+
+    try {
+      const result = await loginAction({ email, password }, nextPath);
+
+      if (!result.ok) {
+        setErrors(result.errors ?? {});
+        setNotice({ variant: "mal", message: result.message });
+        if (result.errors) focusFirstError(result.errors);
+      }
+    } catch {
+      setNotice({ variant: "mal", message: GENERIC_ERROR });
+    } finally {
       setIsLoading(false);
-    }, 600);
+    }
   }
 
   return (
@@ -161,7 +180,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
+        className="mt-5 w-full rounded-md bg-primary px-4 py-3.5 font-display text-[22px] leading-none tracking-[0.06em] text-primary-foreground transition-opacity hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:opacity-60"
       >
         {isLoading ? "Verificando…" : "Ingresar"}
       </button>
