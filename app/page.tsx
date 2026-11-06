@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import DailyReportPage from "@/components/report/DailyReportPage";
+import { getTodayLocal, monthKey, parseLocalDate } from "@/lib/report";
+import { loadEmployeeMonth } from "@/lib/sheets/month";
 import {
   getCurrentEmployee,
   requireSession,
@@ -14,7 +16,26 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   await requireSession();
-  const employee = await getCurrentEmployee();
 
-  return <DailyReportPage employee={employee} />;
+  const employee = await getCurrentEmployee();
+  const todayDate = parseLocalDate(getTodayLocal());
+  const year = todayDate.getFullYear();
+  const monthIndex = todayDate.getMonth();
+
+  const initial = employee
+    ? await loadEmployeeMonth(employee.employeeCode, year, monthIndex)
+    : {
+        month: monthKey(year, monthIndex),
+        reports: [],
+        message: "No encontramos tu ficha de empleado.",
+      };
+
+  return (
+    <DailyReportPage
+      employee={employee}
+      initialMonth={{ year, monthIndex }}
+      initialReports={initial.reports}
+      initialMessage={initial.message}
+    />
+  );
 }

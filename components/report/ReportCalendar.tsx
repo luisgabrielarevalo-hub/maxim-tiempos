@@ -16,6 +16,8 @@ interface ReportCalendarProps {
   selectedDate: string;
   today: string;
   visibleMonth: { year: number; monthIndex: number };
+  isLoading: boolean;
+  message: string | null;
   onSelectDate: (date: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
@@ -27,6 +29,8 @@ export default function ReportCalendar({
   selectedDate,
   today,
   visibleMonth,
+  isLoading,
+  message,
   onSelectDate,
   onPreviousMonth,
   onNextMonth,
@@ -43,11 +47,12 @@ export default function ReportCalendar({
   }
 
   return (
-    <div>
+    <div aria-busy={isLoading}>
       <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
         <span>
-          {monthCount} {monthCount === 1 ? "reporte este mes" : "reportes este mes"} ·{" "}
-          {formatMonthLabel(year, monthIndex)}
+          {isLoading
+            ? "Cargando…"
+            : `${monthCount} registros este mes · ${formatMonthLabel(year, monthIndex)}`}
         </span>
         <div className="inline-flex items-center gap-1.5">
           <button
@@ -75,6 +80,10 @@ export default function ReportCalendar({
           </button>
         </div>
       </div>
+
+      {message !== null ? (
+        <p className="mt-2 text-xs text-muted-foreground">{message}</p>
+      ) : null}
 
       <table
         aria-label="Calendario de jornadas"

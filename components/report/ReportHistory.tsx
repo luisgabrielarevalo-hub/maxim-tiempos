@@ -40,7 +40,7 @@ export default function ReportHistory({ reports, selectedDate }: ReportHistoryPr
         {dayReports.length === 0 ? (
           <div className="flex items-center gap-3 py-7 text-sm text-muted-foreground">
             <CalendarIcon className="size-6 shrink-0" />
-            <p className="m-0">No hay reportes generados para este día.</p>
+            <p className="m-0">No hay registro para este día.</p>
           </div>
         ) : (
           dayReports.map((report) => (
@@ -48,12 +48,22 @@ export default function ReportHistory({ reports, selectedDate }: ReportHistoryPr
               <p className="flex items-center gap-2 font-semibold">
                 <span className={`size-2 rounded-full ${STATUS_DOT_CLASS[report.status]}`} />
                 {STATUS_META[report.status].label}
+                {report.code ? (
+                  <span className="font-mono text-xs font-normal text-muted-foreground">
+                    · {report.code}
+                  </span>
+                ) : null}
               </p>
 
-              {report.status === "pozo" ? (
+              {report.well ? (
                 <>
                   <p className="mt-2 mb-0.5 text-xs text-muted-foreground">Pozo</p>
                   <p className="break-words whitespace-pre-wrap">{report.well}</p>
+                </>
+              ) : null}
+
+              {report.activity ? (
+                <>
                   <p className="mt-2 mb-0.5 text-xs text-muted-foreground">Actividad realizada</p>
                   <p className="break-words whitespace-pre-wrap">{report.activity}</p>
                 </>
@@ -67,7 +77,7 @@ export default function ReportHistory({ reports, selectedDate }: ReportHistoryPr
           ))
         )}
 
-        <p className="mt-5 text-xs text-muted-foreground">Histórico de esta sesión</p>
+        <p className="mt-5 text-xs text-muted-foreground">Fuente: CUADRO DE PERSONAL</p>
       </section>
     </>
   );

@@ -10,13 +10,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03), which persists accounts in Supabase (SPEC 04). Since SPEC 05 the login is real: the report is a private route, the session lives in cookies and every route except `/login` and `/register` requires a session.
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03), which persists accounts in Supabase (SPEC 04). Since SPEC 05 the login is real: the report is a private route, the session lives in cookies and every route except `/login` and `/register` requires a session. Since SPEC 06 the report screen preloads the employee's month from the Google Sheets workbook **CUADRO DE PERSONAL 2026** and reloads it whenever the visible month changes.
 
 ## Layout
 
-- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`, `register/actions.ts`, `actions/auth.ts`). `@/*` maps to the repo root; there is no `src/`.
-- `components/` — React components, grouped by domain (`components/auth/` holds the login and registration screens, their forms and the logout button).
-- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation, the `CurrentEmployee` DTO and `resolveRedirectPath`) and Supabase clients (`lib/supabase/admin.ts`, `server.ts`, `session.ts`, `proxy.ts`, `env.ts`).
+- `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`, `register/actions.ts`, `actions/auth.ts`, `actions/sheet.ts`). `@/*` maps to the repo root; there is no `src/`.
+- `components/` — React components, grouped by domain (`components/auth/` holds the login and registration screens, their forms and the logout button; `components/report/` holds the report form, calendar and history).
+- `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation, the `CurrentEmployee` DTO and `resolveRedirectPath`; `lib/report.ts` holds the report types, status codes and date helpers) and Supabase clients (`lib/supabase/admin.ts`, `server.ts`, `session.ts`, `proxy.ts`, `env.ts`).
+- `lib/sheets/` — Google Sheets integration: `client.ts` (service-account auth, values and grid data, `no-store`), `layout.ts` (tabs, columns, employee rows) and `month.ts` (loads one employee's month as `DailyReport[]`).
 - `supabase/` — `config.toml` and versioned SQL migrations. The remote schema is applied from these migrations, not from the dashboard.
 - `proxy.ts` — Next 16 proxy (replaces `middleware.ts`); refreshes the Supabase session on every request and blocks unauthenticated navigation to private routes.
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
@@ -30,6 +31,7 @@ Run from the repo root.
 - `npm run lint` — runs `eslint` directly (Next 16 removed `next lint`).
 - `npx tsc --noEmit` — typecheck; there is no `typecheck` script.
 - `npm run build` / `npm start`.
+- `npm run sheets:check -- month <código> YYYY-MM` — diagnostic dump of one employee's month (values, translated status and notes). Needs the service-account key.
 - No test suite, CI, or formatter is configured. Do not invent test commands.
 
 ## Next.js 16 quirks
@@ -49,12 +51,24 @@ Run from the repo root.
 - Schema changes are versioned in `supabase/migrations/`: create with `npx supabase migration new <name>`, apply with the Supabase MCP `apply_migration`, then rename the local file to the version returned by `list_migrations`. Never edit an applied migration and never apply schema changes only from the dashboard.
 - Route protection is default-deny: `proxy.ts` calls `updateSession` (which returns the refreshed `response` plus `claims`), redirects `GET`/`HEAD` without a session to `/login?next=…`, sends `/login` to `/` when a session exists, and copies the refreshed cookies plus `Cache-Control` onto those redirects. `POST` (Server Actions) is never redirected. `app/page.tsx` also calls `requireSession()` as defense in depth.
 
+## Google Sheets
+
+- The workbook is **CUADRO DE PERSONAL 2026** (`GOOGLE_SHEETS_SPREADSHEET_ID`), read with a service account (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE` or `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`). The app never uses the employee's Google login.
+- Load flow: `app/page.tsx` calls `requireSession()`, then `getCurrentEmployee()` and `loadEmployeeMonth(employee.employeeCode, year, monthIndex)`; the client reloads through `loadMonthReportsAction` (`app/actions/sheet.ts`) whenever the visible month changes. The action receives only `year` and `monthIndex`; identity always comes from the session.
+- Identification: the employee code is matched against column `A` (`A7:A200`), trimmed and uppercased. A row with a name but no code is a section header and is ignored. No match → empty month with a neutral message (there is no fallback by name or ObjectId).
+- Days: `C` = day 1 … `AG` = day 31, cut at `daysInMonth(year, monthIndex)`. Each day is read with values **and** `CellData.note` in one grid-data call; the note becomes `notes`.
+- Translation: `DE` → `descanso`, `BA` → `base`, `LI` → `licencia`; `FE` and empty cells are skipped; anything else (`ED`, `EN`, `OD`, `V`, `F`, `I`, `D`, `N`, `B`, `L`, `GN`, `GD`…) → `pozo`. `DailyReport.code` keeps the original code and the history shows it next to the status.
+- Sheet days carry empty `well`/`activity`; the history only renders those blocks when they have text.
+- No cache: every month change re-reads the sheet (`cache: "no-store"`); stale responses are discarded with a request counter. Google errors are never exposed — the UI gets a generic Spanish message.
+- Read-only: the app does not write to the sheet yet. Form reports stay in client state (`sessionReports`) and survive month changes; sheet reports live in `sheetReports`.
+
 ## Domain rules from the prototypes
 
 - UI copy is Spanish (`lang="es"`); keep it that way. Code identifiers (functions, variables) are English.
 - Day status is one of `base | pozo | descanso | licencia`. Selecting `pozo` reveals required `pozo` (max 60 chars) and `actividad` (max 500).
 - `observaciones` (max 300) is required for `base`, optional for `pozo`, `descanso` and `licencia`.
 - Dates are local `YYYY-MM-DD` strings; future dates are rejected. Calendar weeks start Monday.
+- The visible month drives the sheet tab (`MONTH_TABS[monthIndex]`); the year is not used to pick a tab because the workbook is annual. The initial month is the server's current month; "Hoy" uses the client's month and reloads if needed.
 - Registration (`/register?code=...`): the employee code comes from the link, is normalized to uppercase `A-Z`/`0-9`, shown read-only and must be exactly 5 chars with both a letter and a digit; a missing or invalid `code` blocks submission. All fields are required — full name (max 120), email (max 254), cargo (max 80), password and confirmation. Password min 8 chars and confirmation must match; email format is validated. There is no acceptance checkbox, code counter/bars/rules/generator, summary card or footer. Login requires a valid email address and a non-empty password.
 - Visual system: Bebas Neue (display), Barlow (sans), IBM Plex Mono (mono); oklch CSS variables including `--status-*` colors; reports have a print stylesheet.
 - `registro-empleado.html` references elements that no longer exist (`generar`, `segundos`, `contar`, `regla-*`, `acepto`), so its script throws on load. Treat it as a visual reference, not a working implementation.

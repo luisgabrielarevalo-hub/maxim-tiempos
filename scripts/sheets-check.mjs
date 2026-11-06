@@ -8,6 +8,7 @@
  *   npm run sheets:check -- employees 2026-11-05
  *   npm run sheets:check -- read "LUIS AREVALO" 2026-11-05
  *   npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
+ *   npm run sheets:check -- month AVD12 2026-11
  *
  * Necesita GOOGLE_SHEETS_SPREADSHEET_ID y las credenciales de la cuenta de
  * servicio en el entorno (ver .env.example).
@@ -46,6 +47,25 @@ function parseIsoDate(iso) {
   if (month < 1 || month > 12) fail(`Mes inválido en "${iso}".`);
   if (day < 1 || day > 31) fail(`Día inválido en "${iso}".`);
   return { month, day };
+}
+
+function parseMonthArg(value) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value ?? "");
+  if (!match) fail(`Mes inválido: "${value}". Usa YYYY-MM.`);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) fail(`Mes inválido en "${value}".`);
+  return { year, monthIndex: month - 1 };
+}
+
+function daysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+function statusFromSheetCode(raw) {
+  const code = String(raw ?? "").trim().toUpperCase();
+  if (!code || code === "FE") return null;
+  return { DE: "descanso", BA: "base", LI: "licencia" }[code] ?? "pozo";
 }
 
 function monthTab(iso) {
@@ -150,6 +170,20 @@ async function getValues(range) {
   return data.values ?? [];
 }
 
+async function getRowCells(range) {
+  const query = new URLSearchParams({
+    ranges: range,
+    includeGridData: "true",
+    fields: "sheets.data.rowData.values(formattedValue,note)",
+  });
+  const data = await request(`?${query.toString()}`);
+  const values = data?.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values ?? [];
+  return values.map((cell) => ({
+    value: String(cell.formattedValue ?? "").trim(),
+    note: String(cell.note ?? "").trim(),
+  }));
+}
+
 function updateValues(range, values) {
   return request(`/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
     method: "PUT",
@@ -176,6 +210,17 @@ async function findEmployee(key, iso) {
     employees.find((employee) => normalize(employee.name) === normalize(key));
   if (!match) fail(`No encontré a "${key}" en ${monthTab(iso)}.`);
   return match;
+}
+
+async function findRowByCode(key, monthIndex) {
+  const rows = await getValues(
+    `${MONTHS[monthIndex]}!A${EMPLOYEE_FIRST_ROW}:A${EMPLOYEE_LAST_ROW}`,
+  );
+  const code = key.trim().toUpperCase();
+  const index = rows.findIndex(
+    (row) => String(row?.[0] ?? "").trim().toUpperCase() === code,
+  );
+  return index === -1 ? null : EMPLOYEE_FIRST_ROW + index;
 }
 
 function cell(employee, iso) {
@@ -210,6 +255,44 @@ async function printEmployees(iso) {
   console.log();
 }
 
+async function printMonth(employeeKey, monthArg) {
+  if (!employeeKey || !monthArg) fail("Uso: month <id> YYYY-MM");
+  const { year, monthIndex } = parseMonthArg(monthArg);
+  const tab = MONTHS[monthIndex];
+  const row = await findRowByCode(employeeKey, monthIndex);
+
+  if (row === null) {
+    fail(`No encontré "${employeeKey}" en la columna A de ${tab}.`);
+  }
+
+  const lastDay = daysInMonth(year, monthIndex);
+  const lastColumn = columnLetter(FIRST_DAY_COLUMN + lastDay - 1);
+  const cells = await getRowCells(`${tab}!C${row}:${lastColumn}${row}`);
+
+  console.log(
+    `\nCUADRO DE PERSONAL ${year} · ${tab} · ${employeeKey.trim()} (fila ${row})`,
+  );
+
+  for (let day = 1; day <= lastDay; day += 1) {
+    const cellValue = cells[day - 1];
+
+    if (!cellValue) continue;
+
+    const status = statusFromSheetCode(cellValue.value);
+
+    if (!status) continue;
+
+    const date = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const note = cellValue.note ? `  · ${cellValue.note.replace(/\s+/g, " ")}` : "";
+
+    console.log(
+      `  ${date}  ${status.padEnd(10)}${cellValue.value.trim().toUpperCase()}${note}`,
+    );
+  }
+
+  console.log();
+}
+
 switch (command) {
   case "tabs":
     await printTabs();
@@ -218,6 +301,12 @@ switch (command) {
   case "employees":
     await printEmployees(args[0] ?? todayLocal());
     break;
+
+  case "month": {
+    const [employeeKey, month] = args;
+    await printMonth(employeeKey, month);
+    break;
+  }
 
   case "read": {
     const [employeeKey] = args;
@@ -259,7 +348,7 @@ switch (command) {
       console.log(`  fila ${String(employee.row).padStart(3)}  ${employee.name}`);
     }
     console.log(
-      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> --yes\n",
+      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> --yes | month <id> YYYY-MM\n",
     );
     break;
   }

@@ -84,6 +84,15 @@ export function monthTabForDate(iso: string): string {
   return MONTH_TABS[month - 1];
 }
 
+/** Pestaña del mes: 0 = enero … 11 = diciembre. */
+export function monthTabForMonth(monthIndex: number): string {
+  const tab = MONTH_TABS[monthIndex];
+
+  if (!tab) throw new Error(`Mes inválido: ${monthIndex}.`);
+
+  return tab;
+}
+
 /** Convierte un índice de columna (1 = A) a letras. */
 export function columnLetter(column: number): string {
   if (!Number.isInteger(column) || column < 1) {
@@ -161,6 +170,23 @@ export async function listEmployees(iso: string): Promise<SheetEmployee[]> {
   );
 
   return parseEmployees(rows);
+}
+
+/** Fila del empleado cuyo código está en la columna A; `null` si no aparece. */
+export async function findEmployeeRow(
+  employeeCode: string,
+  monthIndex: number,
+): Promise<number | null> {
+  const tab = monthTabForMonth(monthIndex);
+  const rows = await getValues(
+    `${tab}!A${EMPLOYEE_FIRST_ROW}:A${EMPLOYEE_LAST_ROW}`,
+  );
+  const code = employeeCode.trim().toUpperCase();
+  const index = rows.findIndex(
+    (row) => (row[0] ?? "").trim().toUpperCase() === code,
+  );
+
+  return index === -1 ? null : EMPLOYEE_FIRST_ROW + index;
 }
 
 /**

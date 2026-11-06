@@ -22,14 +22,15 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Google Sheets
 
-La app escribe el reporte diario en el libro **CUADRO DE PERSONAL** mediante una
-cuenta de servicio (no usa el login de Google del usuario).
+La app lee el mes del empleado autenticado desde el libro **CUADRO DE PERSONAL 2026**
+mediante una cuenta de servicio (no usa el login de Google del usuario). Escribir en
+la hoja al generar un reporte queda pendiente.
 
 ### Credenciales
 
 1. En el proyecto de Google Cloud, habilita **Google Sheets API**.
 2. Crea una **cuenta de servicio** y descarga su clave JSON.
-3. Comparte el spreadsheet con el email de la cuenta de servicio (`...@....iam.gserviceaccount.com`) como **Editor**.
+3. Comparte el spreadsheet con el email de la cuenta de servicio (`...@....iam.gserviceaccount.com`): **Viewer** basta para leer; **Editor** hace falta para `write`.
 4. Guarda la clave en `secrets/service-account.json` (ignorada por git) y copia `.env.example` a `.env.local`.
 
 Variables:
@@ -48,7 +49,12 @@ npm run sheets:check -- tabs                          # pestañas del libro
 npm run sheets:check -- employees 2026-11-05          # empleados del mes
 npm run sheets:check -- read "LUIS AREVALO" 2026-11-05
 npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
+npm run sheets:check -- month AVD12 2026-11           # días traducidos + notas
 ```
+
+`month` acepta cualquier identificador de la columna A (código de 5 caracteres u
+ObjectId), imprime una línea por día con el estado traducido y añade la nota de la
+casilla cuando existe. Es solo diagnóstico: la app no lo usa.
 
 ### Estructura de la hoja
 
@@ -56,7 +62,17 @@ npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
 - `C`…`AG` = días 1…31 (fila 5 = día de la semana, fila 6 = número de día).
 - Códigos de la leyenda: `V` vacaciones, `F` festivo, `I` incapacidad, `D` día, `N` noche, `DE` descanso, `L` licencia, `B` base, `OD` sin definir.
 
-Código: `lib/sheets/client.ts` (auth + API) y `lib/sheets/layout.ts` (pestañas, columnas, empleados, lectura y escritura de un día).
+### Carga del mes
+
+- Al renderizar `/`, después de `requireSession()`, `app/page.tsx` busca el `employee_code` del empleado en la **columna A** de la pestaña del mes y arma sus días.
+- Cada cambio de mes (anterior, siguiente, "Hoy" o clic en un día vecino) llama a `loadMonthReportsAction`, que lee de nuevo la hoja sin caché.
+- Traducción de la casilla: `DE` → descanso, `BA` → base, `LI` → licencia; `FE` y vacío se omiten; cualquier otro código (`ED`, `EN`, `OD`, `V`, `F`…) → pozo.
+- Las notas de las casillas se muestran como observaciones y el código original se conserva como etiqueta junto al estado.
+- Los días de la hoja no traen pozo ni actividad; el histórico solo muestra esos bloques cuando tienen texto.
+- Si el código no aparece en el mes, se muestra un aviso neutro. Si falla Google (credenciales, red, permisos), `/` no falla: muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.`
+- Los reportes generados con el formulario siguen en memoria de la sesión y no se pierden al cambiar de mes.
+
+Código: `lib/sheets/client.ts` (auth + API), `lib/sheets/layout.ts` (pestañas, columnas, empleados, lectura y escritura de un día), `lib/sheets/month.ts` (carga del mes), `app/actions/sheet.ts` (Server Action) y `lib/report.ts` (tipos, traducción y fechas).
 
 ## Supabase
 
@@ -103,7 +119,7 @@ Credenciales inválidas muestran siempre "Correo o contraseña incorrectos.", si
 
 ### Alcance
 
-La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). Persistir los reportes en Supabase o Google Sheets desde la app sigue pendiente.
+La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). La carga del mes desde Google Sheets está implementada (SPEC 06): `/` lee el mes del empleado autenticado y lo recarga al cambiar de mes. Persistir en Supabase o escribir en Google Sheets los reportes generados con el formulario sigue pendiente.
 
 ## Learn More
 
