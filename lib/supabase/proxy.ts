@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { JwtPayload } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -6,8 +7,15 @@ import {
   getSupabaseUrl,
 } from "@/lib/supabase/env";
 
-/** Refresca la sesión de Supabase y propaga las cookies a la respuesta. */
-export async function updateSession(request: NextRequest) {
+export interface SessionUpdate {
+  response: NextResponse;
+  claims: JwtPayload | null;
+}
+
+/** Refresca la sesión de Supabase, propaga las cookies y devuelve los claims. */
+export async function updateSession(
+  request: NextRequest,
+): Promise<SessionUpdate> {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -38,7 +46,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // No ejecutar código entre createServerClient y getClaims: aquí se refresca la sesión.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return response;
+  return { response, claims: data?.claims ?? null };
 }
