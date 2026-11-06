@@ -1,6 +1,6 @@
 # SPEC 04 — Registro del empleado en Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 03 (registro del empleado), SPEC 01 (sistema visual)
 > **Reemplaza:** las decisiones del SPEC 03 sobre registro simulado, "sin red" y "sin redirección".
 > **Fecha:** 2026-11-06
@@ -269,26 +269,26 @@ Dependencias fijadas: `@supabase/ssr@0.12.7` y `@supabase/supabase-js@2.119.0` (
 
 ## Criterios de aceptación
 
-- [ ] `/register?code=ab-12c` muestra el código como `AB12C`.
-- [ ] El campo de código es `readOnly`, no acepta teclado ni pegado y sigue enviándose.
-- [ ] `/register` sin `code` muestra el aviso de enlace inválido y no permite enviar.
-- [ ] `/register?code=ABC` muestra el aviso de enlace inválido y no permite enviar.
-- [ ] Un envío válido crea un usuario en `auth.users` y una fila en `public.employees` con el mismo `id`, `employee_code`, `full_name`, `email` y `cargo`.
-- [ ] El código se guarda en mayúsculas y sin caracteres inválidos.
-- [ ] La contraseña no aparece en `employees`, en logs ni en metadata.
-- [ ] Un código ya registrado responde "Ese código ya está registrado." sin crear usuario.
-- [ ] Un correo ya registrado responde "Ese correo ya está registrado." sin crear usuario.
-- [ ] Si el trigger falla, no queda un usuario huérfano en `auth.users`.
-- [ ] Tras un registro válido, el navegador queda con sesión y llega a `/`.
-- [ ] Un usuario autenticado solo puede leer su propia fila de `employees`; `anon` no lee nada.
-- [ ] Existe `supabase/migrations/<version>_create_employees.sql` con la tabla, RLS, grants, función y trigger, y está commiteado.
-- [ ] `list_migrations` y `supabase_migrations.schema_migrations` muestran una sola migración `create_employees` con la misma versión del archivo local.
-- [ ] Reejecutar el flujo no aplica la migración dos veces ni duplica el historial.
-- [ ] Los errores de Supabase se muestran en español y no exponen detalles internos.
-- [ ] Editar campos limpia errores y el aviso, como en el SPEC 03.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
-- [ ] La consola no muestra errores de React ni de hidratación.
-- [ ] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
+- [x] `/register?code=ab-12c` muestra el código como `AB12C`.
+- [x] El campo de código es `readOnly`, no acepta teclado ni pegado y sigue enviándose.
+- [x] `/register` sin `code` muestra el aviso de enlace inválido y no permite enviar.
+- [x] `/register?code=ABC` muestra el aviso de enlace inválido y no permite enviar.
+- [x] Un envío válido crea un usuario en `auth.users` y una fila en `public.employees` con el mismo `id`, `employee_code`, `full_name`, `email` y `cargo`.
+- [x] El código se guarda en mayúsculas y sin caracteres inválidos.
+- [x] La contraseña no aparece en `employees`, en logs ni en metadata.
+- [x] Un código ya registrado responde "Ese código ya está registrado." sin crear usuario.
+- [x] Un correo ya registrado responde "Ese correo ya está registrado." sin crear usuario.
+- [x] Si el trigger falla, no queda un usuario huérfano en `auth.users`.
+- [x] Tras un registro válido, el navegador queda con sesión y llega a `/`.
+- [x] Un usuario autenticado solo puede leer su propia fila de `employees`; `anon` no lee nada.
+- [x] Existe `supabase/migrations/<version>_create_employees.sql` con la tabla, RLS, grants, función y trigger, y está commiteado.
+- [x] `list_migrations` y `supabase_migrations.schema_migrations` muestran una sola migración `create_employees` con la misma versión del archivo local.
+- [x] Reejecutar el flujo no aplica la migración dos veces ni duplica el historial.
+- [x] Los errores de Supabase se muestran en español y no exponen detalles internos.
+- [x] Editar campos limpia errores y el aviso, como en el SPEC 03.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
+- [x] La consola no muestra errores de React ni de hidratación.
+- [x] Hay capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
 
 ---
 
@@ -325,3 +325,55 @@ Dependencias fijadas: `@supabase/ssr@0.12.7` y `@supabase/supabase-js@2.119.0` (
 - Edición o baja de empleados.
 - Inicio de sesión automático persistente más allá del redirect a `/`.
 - Pruebas automatizadas.
+
+---
+
+## Registro de verificación
+
+**Fecha:** 2026-11-06
+**Entorno:** Windows, Next.js 16.3.4, proyecto Supabase `uvuwrtytwvfdfrpiveod`, dev server en `http://localhost:3000`.
+**Secretos:** `SUPABASE_SECRET_KEY` presente en `.env.local` (valor enmascarado; no se expone en este registro).
+
+### Comandos
+
+| Comando | Resultado |
+| --- | --- |
+| `npx tsc --noEmit` | ✅ exit 0, sin errores |
+| `npm run lint` | ✅ exit 0, sin avisos |
+| `npm run build` | ✅ exit 0; `/register` compilada como dinámica (`ƒ`) |
+
+### Criterios
+
+| Criterio | Estado | Evidencia |
+| --- | --- | --- |
+| `/register?code=ab-12c` muestra `AB12C` | ✅ Verificado | Playwright: input `#register-code` con `value="AB12C"`; `spec04-code-valido-1440x900.png`. |
+| Campo `readOnly`, sin teclado ni pegado, y se envía | ✅ Verificado | `readOnly=true`, `aria-readonly="true"`, sin `onChange` (`components/auth/RegisterForm.tsx:268-283`); teclear `ZZZZZ` y Ctrl+V no cambian el valor; el registro guardó `AB12C` (normalizado desde la URL). |
+| `/register` sin `code`: aviso y envío bloqueado | ✅ Verificado | `role="alert"` con "El enlace no incluye un código de empleado válido. Solicita un enlace nuevo." y `button[type=submit]` `disabled`; `spec04-sin-code-1440x900.png`. |
+| `/register?code=ABC`: aviso y envío bloqueado | ✅ Verificado | Mismo aviso y botón `disabled`; `spec04-code-invalido-1440x900.png`, `spec04-code-invalido-390x844.png`. |
+| Registro válido crea `auth.users` + fila en `public.employees` con los mismos datos | ✅ Verificado | SQL: `same_id=true`, `employee_code=AB12C`, `full_name=Maxim Spec Cuatro`, `email` idéntico, `cargo=Operador de pozo`, `email_confirmed_at` no nulo. |
+| Código en mayúsculas y sin caracteres inválidos | ✅ Verificado | URL `ab-12c` → estado `AB12C` → BD `AB12C`; `normalizeEmployeeCode` (`lib/auth.ts:73-79`) y CHECK `^[A-Z0-9]{5}$` en BD. |
+| Contraseña fuera de `employees`, logs y metadata | ✅ Verificado | `employees` no tiene columna de contraseña; `raw_user_meta_data` solo `cargo/full_name/employee_code/email_verified`; `position('Secreta12345' in raw_user_meta_data)=0`; 0 coincidencias de la contraseña en el log del dev server. |
+| Código ya registrado | ✅ Verificado | Mensaje exacto "Ese código ya está registrado."; `auth.users` siguió en 1 y no se creó el correo alternativo. |
+| Correo ya registrado | ✅ Verificado | Mensaje exacto "Ese correo ya está registrado."; conteos de `auth.users`/`employees` sin cambios. |
+| Fallo del trigger no deja usuario huérfano | ✅ Verificado | `auth.admin.createUser` sin metadata → HTTP 500 "Database error creating new user"; SQL posterior: 0 filas con ese correo (rollback completo). |
+| Tras registro válido hay sesión y se llega a `/` | ✅ Verificado | Playwright: URL final `http://localhost:3000/`, título "Reporte diario de campo", cookie `sb-uvuwrtytwvfdfrpiveod-auth-token`. |
+| RLS: autenticado solo lee su fila; `anon` no lee nada | ✅ Verificado | Con 2 empleados: cliente autenticado devuelve 1 fila (la propia) y 0 al consultar `RLS02`; cliente `anon` devuelve `[]`; INSERT anónimo rechazado con `42501`. |
+| Archivo de migración con tabla, RLS, grants, función y trigger, commiteado | ✅ Verificado | `supabase/migrations/20261106202149_create_employees.sql` en `HEAD` (`git ls-tree`), árbol de trabajo limpio. |
+| Historial con una sola `create_employees` y misma versión local | ✅ Verificado | `list_migrations` y `supabase_migrations.schema_migrations`: `20261106202149/create_employees` (una vez). Existen además `rename_area_to_cargo` y `use_cargo_metadata`, documentadas en la nota del contrato. |
+| Reejecutar el flujo no duplica migración ni historial | ✅ Verificado | Historial: 3 filas, una por versión (`count(*) over (partition by version)=1`); los 3 archivos locales coinciden con las 3 versiones; sin migraciones pendientes. |
+| Errores en español sin detalles internos | ✅ Verificado | Mensajes observados en español; `app/register/actions.ts:20-25` centraliza textos y `:119-121` devuelve el genérico sin `error.message`. |
+| Editar campos limpia errores y aviso | ✅ Verificado | Tras envío vacío, escribir en "Nombre completo" elimina su error y el `role="status"` "Revisa los campos marcados."; quedan solo los errores de los demás campos. |
+| `tsc`, `lint` y `build` pasan | ✅ Verificado | Ver tabla de comandos. |
+| Consola sin errores de React ni hidratación | ✅ Verificado | Contexto aislado nuevo: 0 errores y 0 warnings. Los únicos errores históricos fueron WebSocket HMR de un dev server anterior, ajenos a React/hidratación. |
+| Capturas 1440×900 y 390×844 | ✅ Verificado | `spec04-code-valido-1440x900.png` (1440×900), `spec04-code-valido-390x844.png` (390×844), más `spec04-code-invalido-*` y `spec04-sin-code-1440x900.png` en `.playwright-mcp/`. |
+
+### Limpieza
+
+Los usuarios de prueba (`maxim.spec04.*`) se borraron con la Admin API. Verificación final: `auth.users = 0`, `public.employees = 0`, sin filas con prefijo `maxim.spec04.`.
+
+### Observaciones (no bloqueantes)
+
+- `information_schema.role_table_grants` muestra grants por defecto de Supabase (`anon`/`authenticated` con INSERT/UPDATE/DELETE además de SELECT), pero RLS los bloquea: `anon` lee 0 filas y su INSERT falla con `42501`. El criterio de lectura se cumple.
+- El archivo inicial `create_employees.sql` crea `area`; las migraciones posteriores lo renombran a `cargo` y actualizan la metadata del trigger, tal como documenta la nota del contrato.
+- `normalizeEmployeeCode` recorta a 5 caracteres: un enlace con más caracteres alfanuméricos (`?code=AB12CZZZ`) se aceptaría como `AB12C`. No afecta a los criterios, pero conviene decidir si debe rechazarse.
+
