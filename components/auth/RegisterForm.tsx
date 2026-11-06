@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ClipboardEvent, type FormEvent } from "react";
 import {
   MAX_AREA_LENGTH,
   MAX_EMAIL_LENGTH,
   MAX_FULL_NAME_LENGTH,
+  normalizeEmployeeCode,
   type RegisterErrors,
   type RegisterField,
   type RegisterFormValues,
@@ -42,6 +43,24 @@ export default function RegisterForm() {
 
   function handleChange(field: RegisterField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleCodeChange(value: string) {
+    handleChange("code", normalizeEmployeeCode(value));
+  }
+
+  function handleCodePaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+
+    const input = event.currentTarget;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? start;
+    const pasted = event.clipboardData.getData("text");
+    const nextValue = normalizeEmployeeCode(
+      input.value.slice(0, start) + pasted + input.value.slice(end),
+    );
+
+    handleCodeChange(nextValue);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -169,7 +188,8 @@ export default function RegisterForm() {
             maxLength={5}
             placeholder="AB12C"
             value={values.code}
-            onChange={(event) => handleChange("code", event.target.value)}
+            onChange={(event) => handleCodeChange(event.target.value)}
+            onPaste={handleCodePaste}
             aria-invalid={Boolean(errors.code)}
             aria-describedby={errors.code ? "register-code-error" : undefined}
             className="w-[190px] max-w-full rounded-md border border-input bg-card px-3 py-2.5 text-center font-mono text-2xl font-medium tracking-[0.34em] text-foreground uppercase outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35"
