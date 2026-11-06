@@ -178,6 +178,7 @@ export default function RegisterForm() {
               id="register-full-name"
               name="fullName"
               type="text"
+              required
               autoComplete="name"
               maxLength={MAX_FULL_NAME_LENGTH}
               placeholder="Ej. María Fernanda López"
@@ -203,6 +204,7 @@ export default function RegisterForm() {
               id="register-email"
               name="email"
               type="email"
+              required
               inputMode="email"
               autoComplete="email"
               maxLength={MAX_EMAIL_LENGTH}
@@ -231,6 +233,7 @@ export default function RegisterForm() {
               id="register-area"
               name="area"
               type="text"
+              required
               autoComplete="organization-title"
               maxLength={MAX_AREA_LENGTH}
               placeholder="Ej. Operaciones de pozo"
@@ -269,6 +272,7 @@ export default function RegisterForm() {
             id="register-code"
             name="code"
             type="text"
+            required
             inputMode="text"
             autoComplete="off"
             spellCheck={false}
@@ -312,6 +316,7 @@ export default function RegisterForm() {
                 id="register-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
+                required
                 autoComplete="new-password"
                 placeholder="Mínimo 8 caracteres"
                 value={values.password}
@@ -350,6 +355,7 @@ export default function RegisterForm() {
                 id="register-password-confirmation"
                 name="passwordConfirmation"
                 type={showPasswordConfirmation ? "text" : "password"}
+                required
                 autoComplete="new-password"
                 placeholder="Repite la contraseña"
                 value={values.passwordConfirmation}
