@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 
 import type { CurrentEmployee } from "@/lib/auth";
 import {
@@ -15,6 +15,7 @@ import {
   type ReportField,
   type ReportFormValues,
 } from "@/lib/report";
+import { loadMonthReportsAction } from "@/app/actions/sheet";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
@@ -132,7 +133,7 @@ function ReportWorkspace({
   const todayDate = parseLocalDate(today);
   const [values, setValues] = useState<ReportFormValues>({ ...EMPTY_VALUES, date: today });
   const [errors, setErrors] = useState<ReportErrors>({});
-  const [sheetReports] = useState<DailyReport[]>(initialReports);
+  const [sheetReports, setSheetReports] = useState<DailyReport[]>(initialReports);
   const [sessionReports, setSessionReports] = useState<DailyReport[]>([]);
   const reports = [...sheetReports, ...sessionReports];
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -148,10 +149,54 @@ function ReportWorkspace({
   });
   const [visibleMonth, setVisibleMonth] = useState(initialMonth);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [loadedMonth] = useState({
+  const [isLoadingMonth, setIsLoadingMonth] = useState(false);
+  const [loadedMonth, setLoadedMonth] = useState({
     key: monthKey(initialMonth.year, initialMonth.monthIndex),
     message: initialMessage,
   });
+  const requestIdRef = useRef(0);
+
+  async function requestMonth(next: { year: number; monthIndex: number }) {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setSheetReports([]);
+    setIsLoadingMonth(true);
+
+    try {
+      const result = await loadMonthReportsAction(next.year, next.monthIndex);
+
+      if (requestId !== requestIdRef.current) return;
+
+      setSheetReports(result.reports);
+      setLoadedMonth({ key: result.month, message: result.message });
+    } catch {
+      if (requestId !== requestIdRef.current) return;
+
+      setSheetReports([]);
+      setLoadedMonth({
+        key: monthKey(next.year, next.monthIndex),
+        message: "No pudimos leer la hoja de cálculo. Intenta de nuevo.",
+      });
+    } finally {
+      if (requestId === requestIdRef.current) setIsLoadingMonth(false);
+    }
+  }
+
+  function showMonth(next: { year: number; monthIndex: number }) {
+    setVisibleMonth(next);
+    setShowSuccess(false);
+
+    const key = monthKey(next.year, next.monthIndex);
+
+    if (key === loadedMonth.key) {
+      // Invalida cualquier respuesta en vuelo: ya estamos en el mes correcto.
+      requestIdRef.current += 1;
+      setIsLoadingMonth(false);
+      return;
+    }
+
+    void requestMonth(next);
+  }
 
   function handleChange(field: ReportField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -204,7 +249,7 @@ function ReportWorkspace({
     setSessionReports((current) => [...current, report]);
     setSelectedDate(values.date);
     const reportDate = parseLocalDate(values.date);
-    setVisibleMonth({ year: reportDate.getFullYear(), monthIndex: reportDate.getMonth() });
+    showMonth({ year: reportDate.getFullYear(), monthIndex: reportDate.getMonth() });
     setShowSuccess(true);
 
     return {};
@@ -213,28 +258,26 @@ function ReportWorkspace({
   function handleSelectDate(date: string) {
     const parsed = parseLocalDate(date);
     setSelectedDate(date);
-    setVisibleMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
-    setShowSuccess(false);
+    showMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
   }
 
   function handlePreviousMonth() {
-    setVisibleMonth((current) => ({
-      year: current.monthIndex === 0 ? current.year - 1 : current.year,
-      monthIndex: (current.monthIndex + 11) % 12,
-    }));
+    showMonth({
+      year: visibleMonth.monthIndex === 0 ? visibleMonth.year - 1 : visibleMonth.year,
+      monthIndex: (visibleMonth.monthIndex + 11) % 12,
+    });
   }
 
   function handleNextMonth() {
-    setVisibleMonth((current) => ({
-      year: current.monthIndex === 11 ? current.year + 1 : current.year,
-      monthIndex: (current.monthIndex + 1) % 12,
-    }));
+    showMonth({
+      year: visibleMonth.monthIndex === 11 ? visibleMonth.year + 1 : visibleMonth.year,
+      monthIndex: (visibleMonth.monthIndex + 1) % 12,
+    });
   }
 
   function handleToday() {
     setSelectedDate(today);
-    setVisibleMonth({ year: todayDate.getFullYear(), monthIndex: todayDate.getMonth() });
-    setShowSuccess(false);
+    showMonth({ year: todayDate.getFullYear(), monthIndex: todayDate.getMonth() });
   }
 
   function handleClear() {
@@ -278,6 +321,7 @@ function ReportWorkspace({
             selectedDate={selectedDate}
             today={today}
             visibleMonth={visibleMonth}
+            isLoading={isLoadingMonth}
             message={
               loadedMonth.key === monthKey(visibleMonth.year, visibleMonth.monthIndex)
                 ? loadedMonth.message
