@@ -192,35 +192,35 @@ No se incluyen:
 
 ## Criterios de aceptación
 
-- [ ] `/register` responde y muestra la pantalla de registro en español sin errores en consola.
-- [ ] `/` y `/login` siguen funcionando sin cambios funcionales.
-- [ ] El encabezado muestra "Bitácora de personal · Registro" y "Registro del empleado", sin nota.
-- [ ] El panel muestra las secciones 01 Datos del empleado, 02 Código de empleado y 03 Cuenta de acceso.
-- [ ] No hay pie de página.
-- [ ] El bloque de código **no** muestra contador, barras, lista de reglas ni botón "Generar".
-- [ ] El código se normaliza a mayúsculas, descarta caracteres inválidos y se limita a 5.
-- [ ] No existe casilla de aceptación ni enlaces a `/login` o `/`.
-- [ ] Enviar vacío muestra los seis mensajes, enfoca el nombre y no genera aviso de éxito.
-- [ ] Un correo inválido muestra "Escribe un correo electrónico válido." y no envía.
-- [ ] El nombre limita a 120 caracteres y el cargo a 80, con `maxLength` y validación de respaldo.
-- [ ] Un cargo vacío muestra "Escribe el cargo." y no envía.
-- [ ] Un código `ABCDE` muestra "El código debe mezclar letras y números.".
-- [ ] Un código `12345` muestra "El código debe mezclar letras y números.".
-- [ ] Un código `AB12` muestra "El código debe tener 5 caracteres.".
-- [ ] Una contraseña de 7 caracteres muestra "La contraseña debe tener 8 caracteres o más.".
-- [ ] Una confirmación distinta muestra "Las contraseñas no coinciden.".
-- [ ] Un formulario válido pasa la validación y produce un solo envío.
-- [ ] Mientras registra, el botón queda deshabilitado y su texto es "Registrando…".
-- [ ] Tras 600 ms aparece el aviso `ok` "Empleado registrado correctamente." con `role="status"`.
-- [ ] Editar cualquier campo u ocultar/mostrar una contraseña oculta el aviso y limpia el error del campo editado.
-- [ ] Los dos botones Ver/Ocultar funcionan de forma independiente y actualizan `aria-pressed` y `aria-controls`.
-- [ ] Los errores están conectados con `aria-describedby` y el foco es visible en todos los controles.
-- [ ] La pantalla es usable a 390×844 sin desbordamiento horizontal y se ve alineada con el prototipo a 1440×900.
-- [ ] No hay redirección, cookie, `localStorage` ni llamada de red tras un registro válido.
-- [ ] `AGENTS.md` describe el registro implementado en `/register` con todos los campos obligatorios.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
-- [ ] La consola no muestra errores de React ni advertencias de hidratación.
-- [ ] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
+- [x] `/register` responde y muestra la pantalla de registro en español sin errores en consola.
+- [x] `/` y `/login` siguen funcionando sin cambios funcionales.
+- [x] El encabezado muestra "Bitácora de personal · Registro" y "Registro del empleado", sin nota.
+- [x] El panel muestra las secciones 01 Datos del empleado, 02 Código de empleado y 03 Cuenta de acceso.
+- [x] No hay pie de página.
+- [x] El bloque de código **no** muestra contador, barras, lista de reglas ni botón "Generar".
+- [x] El código se normaliza a mayúsculas, descarta caracteres inválidos y se limita a 5.
+- [x] No existe casilla de aceptación ni enlaces a `/login` o `/`.
+- [x] Enviar vacío muestra los seis mensajes, enfoca el nombre y no genera aviso de éxito.
+- [x] Un correo inválido muestra "Escribe un correo electrónico válido." y no envía.
+- [x] El nombre limita a 120 caracteres y el cargo a 80, con `maxLength` y validación de respaldo.
+- [x] Un cargo vacío muestra "Escribe el cargo." y no envía.
+- [x] Un código `ABCDE` muestra "El código debe mezclar letras y números.".
+- [x] Un código `12345` muestra "El código debe mezclar letras y números.".
+- [x] Un código `AB12` muestra "El código debe tener 5 caracteres.".
+- [x] Una contraseña de 7 caracteres muestra "La contraseña debe tener 8 caracteres o más.".
+- [x] Una confirmación distinta muestra "Las contraseñas no coinciden.".
+- [x] Un formulario válido pasa la validación y produce un solo envío.
+- [x] Mientras registra, el botón queda deshabilitado y su texto es "Registrando…".
+- [x] Tras 600 ms aparece el aviso `ok` "Empleado registrado correctamente." con `role="status"`.
+- [x] Editar cualquier campo u ocultar/mostrar una contraseña oculta el aviso y limpia el error del campo editado.
+- [x] Los dos botones Ver/Ocultar funcionan de forma independiente y actualizan `aria-pressed` y `aria-controls`.
+- [x] Los errores están conectados con `aria-describedby` y el foco es visible en todos los controles.
+- [x] La pantalla es usable a 390×844 sin desbordamiento horizontal y se ve alineada con el prototipo a 1440×900.
+- [x] No hay redirección, cookie, `localStorage` ni llamada de red tras un registro válido.
+- [x] `AGENTS.md` describe el registro implementado en `/register` con todos los campos obligatorios.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` terminan sin errores.
+- [x] La consola no muestra errores de React ni advertencias de hidratación.
+- [x] Hay capturas de 1440×900 y 390×844 guardadas en `.playwright-mcp/`.
 
 ---
 
