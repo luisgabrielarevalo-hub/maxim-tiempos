@@ -1,6 +1,7 @@
 # SPEC 02 — Acceso del empleado
 
 > **Estado:** Implementado
+> **Reemplazado en parte por:** SPEC 05 (login real con Supabase Auth, sesión en cookies, logout y rutas protegidas). Las decisiones de este spec sobre verificación simulada, ausencia de backend/sesión y falta de redirección ya no están vigentes.
 > **Depende de:** SPEC 01 (reporte diario de campo)
 > **Fecha:** 2026-11-05
 > **Objetivo:** Implementar en Next.js la pantalla `/login` a partir del prototipo `Referencias/login-empleado.html`, con formulario validado de correo electrónico y contraseña, sin backend ni sesión real.

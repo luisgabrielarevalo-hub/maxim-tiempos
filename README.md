@@ -60,7 +60,7 @@ Código: `lib/sheets/client.ts` (auth + API) y `lib/sheets/layout.ts` (pestañas
 
 ## Supabase
 
-El registro de empleados (`/register?code=XXXXX`) persiste en Supabase.
+El registro de empleados (`/register?code=XXXXX`) y el acceso (`/login`) persisten y verifican contra Supabase.
 
 ### Variables
 
@@ -78,7 +78,7 @@ Copia `.env.example` a `.env.local` y añade la secret key desde Dashboard → S
 2. `app/register/actions.ts` valida en el servidor, comprueba duplicados y crea el usuario con la Admin API (`email_confirm: true`).
 3. El trigger `private.handle_new_employee()` inserta el perfil en `public.employees` en la misma transacción.
 4. La acción inicia sesión con cookies (`@supabase/ssr`) y redirige a `/`.
-5. `proxy.ts` refresca la sesión en cada petición.
+5. `proxy.ts` refresca la sesión en cada petición y protege las rutas privadas.
 
 Si falta el `code` o no tiene 5 caracteres con letra y dígito, el formulario muestra un aviso y bloquea el envío.
 
@@ -90,9 +90,20 @@ npx supabase migration new <nombre>
 
 Se aplican con el MCP de Supabase (`apply_migration`) usando el mismo SQL del archivo; después el archivo local se renombra con la versión que devuelve `list_migrations`. El historial vive en `supabase_migrations.schema_migrations`. No se edita una migración ya aplicada ni se aplica esquema solo desde el dashboard.
 
+### Flujo de acceso
+
+1. `/login` pide correo y contraseña; `app/actions/auth.ts` valida en el servidor y llama `signInWithPassword`.
+2. `@supabase/ssr` guarda la sesión en cookies `HttpOnly`; el token nunca va a `localStorage`.
+3. La acción redirige a `/` o al `next` saneado (solo rutas internas; `//`, `/\`, saltos de línea y `/login` caen en `/`).
+4. `proxy.ts` protege por defecto: sin sesión, cualquier ruta privada responde `307` a `/login?next=…`; con sesión, `/login` va a `/`. Solo `/login` y `/register` son públicas.
+5. `app/page.tsx` vuelve a exigir sesión con `requireSession()` y el header del reporte muestra código, nombre y cargo del empleado.
+6. "Salir" ejecuta `logoutAction`, borra las cookies y vuelve a `/login?signedOut=1`.
+
+Credenciales inválidas muestran siempre "Correo o contraseña incorrectos.", sin revelar si el correo existe. Quedan fuera de este alcance la recuperación de contraseña, "recordarme", MFA, roles y el rate limiting propio.
+
 ### Alcance
 
-`/login` sigue usando el stub `authenticate()` y las rutas no están protegidas. El login real, el logout y la protección de rutas corresponden al SPEC 05.
+La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). Persistir los reportes en Supabase o Google Sheets desde la app sigue pendiente.
 
 ## Learn More
 

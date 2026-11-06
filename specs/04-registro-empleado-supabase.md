@@ -1,6 +1,7 @@
 # SPEC 04 — Registro del empleado en Supabase
 
 > **Estado:** Implementado
+> **Nota de reemplazo:** el login real, el logout y la protección de rutas que este spec dejó pendientes ya están implementados en el SPEC 05. El registro descrito aquí sigue vigente.
 > **Depende de:** SPEC 03 (registro del empleado), SPEC 01 (sistema visual)
 > **Reemplaza:** las decisiones del SPEC 03 sobre registro simulado, "sin red" y "sin redirección".
 > **Fecha:** 2026-11-06

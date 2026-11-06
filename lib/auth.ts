@@ -7,9 +7,25 @@ export type LoginField = "email" | "password";
 
 export type LoginErrors = Partial<Record<LoginField, string>>;
 
-export interface AuthResult {
-  ok: boolean;
-  message: string;
+export interface CurrentEmployee {
+  employeeCode: string;
+  fullName: string;
+  cargo: string;
+}
+
+const UNSAFE_REDIRECT_PATH = /[\r\n\\]/;
+
+/** Solo rutas internas; cualquier intento de salir del sitio cae en "/". */
+export function resolveRedirectPath(value: unknown): string {
+  if (typeof value !== "string") return "/";
+
+  const path = value.trim();
+
+  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  if (UNSAFE_REDIRECT_PATH.test(path)) return "/";
+  if (path === "/login" || path.startsWith("/login?")) return "/";
+
+  return path;
 }
 
 export const MAX_EMAIL_LENGTH = 254;
@@ -32,14 +48,6 @@ export function validateLogin(values: LoginFormValues): LoginErrors {
   }
 
   return errors;
-}
-
-/** Stub de demostración: siempre responde ok. Se sustituirá por la llamada real. */
-export function authenticate(email: string, password: string): AuthResult {
-  void email;
-  void password;
-
-  return { ok: true, message: "Acceso correcto. Bienvenido(a)." };
 }
 
 export interface RegisterFormValues {
