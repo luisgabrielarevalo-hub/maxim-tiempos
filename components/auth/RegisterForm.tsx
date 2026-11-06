@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, type ClipboardEvent, type FormEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type FormEvent } from "react";
 import {
   MAX_AREA_LENGTH,
   MAX_EMAIL_LENGTH,
   MAX_FULL_NAME_LENGTH,
   normalizeEmployeeCode,
+  validateRegistration,
   type RegisterErrors,
   type RegisterField,
   type RegisterFormValues,
@@ -40,6 +41,12 @@ const INITIAL_VALUES: RegisterFormValues = {
 };
 
 export default function RegisterForm() {
+  const fullNameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const areaInputRef = useRef<HTMLInputElement>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const passwordConfirmationInputRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<RegisterFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [notice, setNotice] = useState<RegisterNotice | null>(null);
@@ -70,6 +77,29 @@ export default function RegisterForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const nextErrors = validateRegistration(values);
+    setErrors(nextErrors);
+
+    if (nextErrors.fullName) {
+      fullNameInputRef.current?.focus();
+    } else if (nextErrors.email) {
+      emailInputRef.current?.focus();
+    } else if (nextErrors.area) {
+      areaInputRef.current?.focus();
+    } else if (nextErrors.code) {
+      codeInputRef.current?.focus();
+    } else if (nextErrors.password) {
+      passwordInputRef.current?.focus();
+    } else if (nextErrors.passwordConfirmation) {
+      passwordConfirmationInputRef.current?.focus();
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setNotice({ variant: "mal", message: "Revisa los campos marcados." });
+    } else {
+      setNotice(null);
+    }
   }
 
   return (
@@ -95,6 +125,7 @@ export default function RegisterForm() {
               Nombre completo
             </label>
             <input
+              ref={fullNameInputRef}
               id="register-full-name"
               name="fullName"
               type="text"
@@ -119,6 +150,7 @@ export default function RegisterForm() {
               Correo electrónico
             </label>
             <input
+              ref={emailInputRef}
               id="register-email"
               name="email"
               type="email"
@@ -146,6 +178,7 @@ export default function RegisterForm() {
               Cargo
             </label>
             <input
+              ref={areaInputRef}
               id="register-area"
               name="area"
               type="text"
@@ -183,6 +216,7 @@ export default function RegisterForm() {
             Código alfanumérico de 5 caracteres
           </label>
           <input
+            ref={codeInputRef}
             id="register-code"
             name="code"
             type="text"
@@ -225,6 +259,7 @@ export default function RegisterForm() {
             </label>
             <div className="relative">
               <input
+                ref={passwordInputRef}
                 id="register-password"
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -259,6 +294,7 @@ export default function RegisterForm() {
             </label>
             <div className="relative">
               <input
+                ref={passwordConfirmationInputRef}
                 id="register-password-confirmation"
                 name="passwordConfirmation"
                 type={showPasswordConfirmation ? "text" : "password"}
