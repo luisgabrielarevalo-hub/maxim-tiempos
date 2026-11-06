@@ -141,10 +141,3 @@ export function validateRegistration(
 
   return errors;
 }
-
-/** Stub de demostración: siempre responde ok. Se sustituirá por el guardado real. */
-export function registerEmployee(employee: EmployeeSummary): AuthResult {
-  void employee;
-
-  return { ok: true, message: "Empleado registrado correctamente." };
-}
