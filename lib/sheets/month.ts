@@ -4,6 +4,7 @@ import {
   MONTH_NAMES,
   daysInMonth,
   monthKey,
+  parseSheetNote,
   statusFromSheetCode,
   type DailyReport,
 } from "@/lib/report";
@@ -61,15 +62,16 @@ export async function loadEmployeeMonth(
       if (status === "skip") continue;
 
       const date = `${month}-${String(day).padStart(2, "0")}`;
+      const parsed = parseSheetNote(cell.note, status);
 
       reports.push({
         id: `sheet:${date}`,
         date,
         status,
         code: cell.value.trim().toUpperCase(),
-        well: "",
-        activity: "",
-        notes: cell.note,
+        well: parsed.well,
+        activity: parsed.activity,
+        notes: parsed.notes,
       });
     }
 

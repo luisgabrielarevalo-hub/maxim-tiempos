@@ -14,7 +14,7 @@ import { CheckIcon, ClipboardIcon, ResetIcon } from "./icons";
 import StatusSelector from "./StatusSelector";
 
 const FIELD_CLASS =
-  "w-full rounded-md border border-input bg-card px-3 py-2.5 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35";
+  "w-full rounded-md border border-input bg-card px-3 py-2.5 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:opacity-60";
 
 const LABEL_CLASS =
   "mb-1.5 block font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase";
@@ -31,10 +31,17 @@ interface ReportFormProps {
   values: ReportFormValues;
   errors: ReportErrors;
   today: string;
+  yesterday: string;
   showSuccess: boolean;
+  isSaving: boolean;
+  isLoadingDay: boolean;
+  dayMessage: string | null;
+  dayLoadFailed: boolean;
+  existingCode: string | null;
+  saveError: string | null;
   onChange: (field: ReportField, value: string) => void;
   onStatusChange: (status: DayStatus) => void;
-  onSubmit: () => ReportErrors;
+  onSubmit: () => Promise<ReportErrors>;
   onClear: () => void;
 }
 
@@ -54,7 +61,14 @@ export default function ReportForm({
   values,
   errors,
   today,
+  yesterday,
   showSuccess,
+  isSaving,
+  isLoadingDay,
+  dayMessage,
+  dayLoadFailed,
+  existingCode,
+  saveError,
   onChange,
   onStatusChange,
   onSubmit,
@@ -65,10 +79,14 @@ export default function ReportForm({
   const notesRequired = values.status !== "" && REQUIRED_NOTES_STATUSES.includes(values.status);
   const activityLength = values.activity.trim().length;
   const notesLength = values.notes.trim().length;
+  const canSubmit = !isLoadingDay && !isSaving && !dayLoadFailed;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors = onSubmit();
+
+    if (!canSubmit) return;
+
+    const nextErrors = await onSubmit();
     const firstInvalid = FIELD_ORDER.find((field) => nextErrors[field]);
     if (!firstInvalid || !formRef.current) return;
 
@@ -104,7 +122,9 @@ export default function ReportForm({
             name="date"
             type="date"
             value={values.date}
+            min={yesterday}
             max={today}
+            disabled={isLoadingDay}
             onChange={(event) => onChange("date", event.target.value)}
             aria-invalid={Boolean(errors.date)}
             aria-describedby={errors.date ? "error-date" : undefined}
@@ -113,6 +133,21 @@ export default function ReportForm({
           {errors.date ? (
             <p id="error-date" className={ERROR_CLASS}>
               {errors.date}
+            </p>
+          ) : null}
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Solo puedes reportar hoy o ayer.
+          </p>
+          {existingCode ? (
+            <p className="mt-1.5 text-[13px] text-muted-foreground">
+              Editando reporte existente · <span className="font-mono">{existingCode}</span>
+            </p>
+          ) : null}
+          {dayMessage ? (
+            <p
+              className={`mt-1.5 text-[13px] ${dayLoadFailed ? "text-destructive" : "text-muted-foreground"}`}
+            >
+              {dayMessage}
             </p>
           ) : null}
         </div>
@@ -129,6 +164,7 @@ export default function ReportForm({
         <StatusSelector
           value={values.status}
           onChange={onStatusChange}
+          disabled={isLoadingDay}
           describedBy={errors.status ? "error-status" : undefined}
         />
         {errors.status ? (
@@ -155,6 +191,7 @@ export default function ReportForm({
                   value={values.well}
                   autoComplete="off"
                   placeholder="Pozo, campo o número de plataforma"
+                  disabled={isLoadingDay}
                   onChange={(event) => onChange("well", event.target.value)}
                   aria-invalid={Boolean(errors.well)}
                   aria-describedby={errors.well ? "error-well" : undefined}
@@ -177,6 +214,7 @@ export default function ReportForm({
                   rows={4}
                   value={values.activity}
                   placeholder="Ej. Cambio de sarta de perforación y registro de parámetros"
+                  disabled={isLoadingDay}
                   onChange={(event) => onChange("activity", event.target.value)}
                   aria-invalid={Boolean(errors.activity)}
                   aria-describedby={errors.activity ? "error-activity" : undefined}
@@ -218,6 +256,7 @@ export default function ReportForm({
           rows={4}
           value={values.notes}
           placeholder="Indica actividades realizadas y/o pozo y nombre de registro"
+          disabled={isLoadingDay}
           onChange={(event) => onChange("notes", event.target.value)}
           aria-invalid={Boolean(errors.notes)}
           aria-describedby={errors.notes ? "error-notes" : undefined}
@@ -231,11 +270,20 @@ export default function ReportForm({
       </section>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-border bg-muted/40 px-5 py-4 sm:px-7">
-        <button type="submit" className={PRIMARY_BUTTON_CLASS}>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className={`${PRIMARY_BUTTON_CLASS} disabled:cursor-not-allowed disabled:opacity-60`}
+        >
           <ClipboardIcon />
-          Generar reporte
+          {isSaving ? "Guardando…" : "Guardar reporte"}
         </button>
-        <button type="button" onClick={onClear} className={SECONDARY_BUTTON_CLASS}>
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={isSaving}
+          className={`${SECONDARY_BUTTON_CLASS} disabled:cursor-not-allowed disabled:opacity-60`}
+        >
           <ResetIcon />
           Limpiar
         </button>
@@ -247,10 +295,15 @@ export default function ReportForm({
           {showSuccess ? (
             <>
               <CheckIcon />
-              Reporte completo
+              Reporte guardado
             </>
           ) : null}
         </span>
+        {saveError ? (
+          <p role="alert" className="text-[13px] font-medium text-destructive">
+            {saveError}
+          </p>
+        ) : null}
       </div>
     </form>
   );

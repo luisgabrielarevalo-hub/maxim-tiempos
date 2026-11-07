@@ -198,6 +198,59 @@ export async function getRowCells(range: string): Promise<GridCell[]> {
   }));
 }
 
+export interface CellUpdate {
+  tab: string;
+  row: number;
+  column: number;
+  value: string;
+  note: string;
+}
+
+/**
+ * Escribe valor y nota de una celda en una sola petición. `fields` preserva el
+ * formato, la validación de datos y demás propiedades de la celda.
+ */
+export async function updateCell(update: CellUpdate): Promise<void> {
+  const metadata = await getSpreadsheetMetadata();
+  const sheet = metadata.sheets?.find(
+    (candidate) => candidate.properties.title === update.tab,
+  );
+
+  if (!sheet) {
+    throw new SheetsError(`No encontré la pestaña "${update.tab}".`);
+  }
+
+  await request(`${getSpreadsheetId()}:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({
+      requests: [
+        {
+          updateCells: {
+            range: {
+              sheetId: sheet.properties.sheetId,
+              startRowIndex: update.row - 1,
+              endRowIndex: update.row,
+              startColumnIndex: update.column - 1,
+              endColumnIndex: update.column,
+            },
+            rows: [
+              {
+                values: [
+                  {
+                    userEnteredValue: { stringValue: update.value },
+                    note: update.note,
+                  },
+                ],
+              },
+            ],
+            fields: "userEnteredValue,note",
+          },
+        },
+      ],
+    }),
+  });
+}
+
 export async function updateValues(
   range: string,
   values: (string | number)[][],

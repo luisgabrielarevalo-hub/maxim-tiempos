@@ -18,7 +18,8 @@ export default async function Home() {
   await requireSession();
 
   const employee = await getCurrentEmployee();
-  const todayDate = parseLocalDate(getTodayLocal());
+  const serverToday = getTodayLocal();
+  const todayDate = parseLocalDate(serverToday);
   const year = todayDate.getFullYear();
   const monthIndex = todayDate.getMonth();
 
@@ -33,6 +34,7 @@ export default async function Home() {
   return (
     <DailyReportPage
       employee={employee}
+      today={serverToday}
       initialMonth={{ year, monthIndex }}
       initialReports={initial.reports}
       initialMessage={initial.message}

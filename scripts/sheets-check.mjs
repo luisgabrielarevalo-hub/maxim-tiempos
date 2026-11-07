@@ -8,6 +8,7 @@
  *   npm run sheets:check -- employees 2026-11-05
  *   npm run sheets:check -- read "LUIS AREVALO" 2026-11-05
  *   npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
+ *   npm run sheets:check -- write AVD12 2026-11-06 ED --note "SFRA100 TRZ · Cambio de sarta" --yes
  *   npm run sheets:check -- month AVD12 2026-11
  *
  * Necesita GOOGLE_SHEETS_SPREADSHEET_ID y las credenciales de la cuenta de
@@ -82,8 +83,12 @@ function columnLetter(column) {
   return label;
 }
 
+function dayColumnIndex(iso) {
+  return FIRST_DAY_COLUMN + parseIsoDate(iso).day - 1;
+}
+
 function dayColumn(iso) {
-  return columnLetter(FIRST_DAY_COLUMN + parseIsoDate(iso).day - 1);
+  return columnLetter(dayColumnIndex(iso));
 }
 
 function normalize(value) {
@@ -184,10 +189,42 @@ async function getRowCells(range) {
   }));
 }
 
-function updateValues(range, values) {
-  return request(`/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
-    method: "PUT",
-    body: JSON.stringify({ range, majorDimension: "ROWS", values }),
+async function updateCell(tab, row, column, value, note) {
+  const data = await request("");
+  const sheet = (data.sheets ?? []).find(
+    (candidate) => candidate.properties.title === tab,
+  );
+
+  if (!sheet) fail(`No encontré la pestaña "${tab}".`);
+
+  await request(":batchUpdate", {
+    method: "POST",
+    body: JSON.stringify({
+      requests: [
+        {
+          updateCells: {
+            range: {
+              sheetId: sheet.properties.sheetId,
+              startRowIndex: row - 1,
+              endRowIndex: row,
+              startColumnIndex: column - 1,
+              endColumnIndex: column,
+            },
+            rows: [
+              {
+                values: [
+                  {
+                    userEnteredValue: { stringValue: value },
+                    note,
+                  },
+                ],
+              },
+            ],
+            fields: "userEnteredValue,note",
+          },
+        },
+      ],
+    }),
   });
 }
 
@@ -314,25 +351,40 @@ switch (command) {
     const date = args[1] ?? todayLocal();
     const employee = await findEmployee(employeeKey, date);
     const range = cell(employee, date);
-    const values = await getValues(range);
-    console.log(`\n${employee.name} · ${date} · ${range}`);
-    console.log(`  código actual: ${JSON.stringify(values[0]?.[0] ?? "")}\n`);
+    const cells = await getRowCells(range);
+    const current = cells[0] ?? { value: "", note: "" };
+    console.log(`\n${employee.id} — ${date} — ${range}`);
+    console.log(`  código actual: ${JSON.stringify(current.value)}`);
+    console.log(`  nota actual: ${JSON.stringify(current.note)}\n`);
     break;
   }
 
   case "write": {
     const [employeeKey, date, code] = args;
     if (!employeeKey || !date || !code) {
-      fail('Uso: write "<empleado>" YYYY-MM-DD <código> --yes');
+      fail('Uso: write "<empleado>" YYYY-MM-DD <código> [--note "texto"] --yes');
     }
     if (!args.includes("--yes")) fail("Agrega --yes para confirmar la escritura.");
+    const noteIndex = args.indexOf("--note");
+    const note = noteIndex === -1 ? "" : (args[noteIndex + 1] ?? "");
     const employee = await findEmployee(employeeKey, date);
     const range = cell(employee, date);
-    const before = (await getValues(range))[0]?.[0] ?? "";
-    const result = await updateValues(range, [[code]]);
-    console.log(`\n${employee.name} · ${date} · ${range}`);
-    console.log(`  antes: ${JSON.stringify(before)} → ahora: ${JSON.stringify(code)}`);
-    console.log(`  celdas actualizadas: ${result.updatedCells ?? "?"}\n`);
+    const beforeCells = await getRowCells(range);
+    const before = beforeCells[0] ?? { value: "", note: "" };
+    await updateCell(
+      monthTab(date),
+      employee.row,
+      dayColumnIndex(date),
+      code,
+      note,
+    );
+    console.log(`\n${employee.id} — ${date} — ${range}`);
+    console.log(
+      `  código antes: ${JSON.stringify(before.value)} → ahora: ${JSON.stringify(code)}`,
+    );
+    console.log(
+      `  nota antes: ${JSON.stringify(before.note)} → ahora: ${JSON.stringify(note)}\n`,
+    );
     break;
   }
 
@@ -348,7 +400,7 @@ switch (command) {
       console.log(`  fila ${String(employee.row).padStart(3)}  ${employee.name}`);
     }
     console.log(
-      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> --yes | month <id> YYYY-MM\n",
+      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> [--note \"texto\"] --yes | month <id> YYYY-MM\n",
     );
     break;
   }

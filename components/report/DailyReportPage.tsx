@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CurrentEmployee } from "@/lib/auth";
 import {
   daysInMonth,
-  getTodayLocal,
+  isAllowedReportDate,
   monthKey,
   parseLocalDate,
+  previousLocalDate,
   validateReport,
   type DailyReport,
   type DayStatus,
@@ -15,7 +16,11 @@ import {
   type ReportField,
   type ReportFormValues,
 } from "@/lib/report";
-import { loadMonthReportsAction } from "@/app/actions/sheet";
+import {
+  loadDayReportAction,
+  loadMonthReportsAction,
+  saveDayReportAction,
+} from "@/app/actions/sheet";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
@@ -30,18 +35,9 @@ const EMPTY_VALUES: ReportFormValues = {
   notes: "",
 };
 
-const emptySubscribe = () => () => {};
-
-function useTodayLocal(): string | null {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => getTodayLocal(),
-    () => null,
-  );
-}
-
 interface DailyReportPageProps {
   employee: CurrentEmployee | null;
+  today: string;
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
@@ -49,12 +45,11 @@ interface DailyReportPageProps {
 
 export default function DailyReportPage({
   employee,
+  today,
   initialMonth,
   initialReports,
   initialMessage,
 }: DailyReportPageProps) {
-  const today = useTodayLocal();
-
   return (
     <>
       <div
@@ -94,26 +89,13 @@ export default function DailyReportPage({
         </div>
       </header>
 
-      {today ? (
-        <ReportWorkspace
-          today={today}
-          initialMonth={initialMonth}
-          initialReports={initialReports}
-          initialMessage={initialMessage}
-        />
-      ) : (
-        <WorkspaceSkeleton />
-      )}
+      <ReportWorkspace
+        today={today}
+        initialMonth={initialMonth}
+        initialReports={initialReports}
+        initialMessage={initialMessage}
+      />
     </>
-  );
-}
-
-function WorkspaceSkeleton() {
-  return (
-    <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
-      <div className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]" />
-      <div className="min-h-[420px]" />
-    </main>
   );
 }
 
@@ -131,11 +113,11 @@ function ReportWorkspace({
   initialMessage,
 }: ReportWorkspaceProps) {
   const todayDate = parseLocalDate(today);
+  const yesterday = previousLocalDate(today);
   const [values, setValues] = useState<ReportFormValues>({ ...EMPTY_VALUES, date: today });
   const [errors, setErrors] = useState<ReportErrors>({});
   const [sheetReports, setSheetReports] = useState<DailyReport[]>(initialReports);
-  const [sessionReports, setSessionReports] = useState<DailyReport[]>([]);
-  const reports = [...sheetReports, ...sessionReports];
+  const reports = sheetReports;
   const [selectedDate, setSelectedDate] = useState(() => {
     const isTodayInInitialMonth =
       todayDate.getFullYear() === initialMonth.year &&
@@ -150,11 +132,63 @@ function ReportWorkspace({
   const [visibleMonth, setVisibleMonth] = useState(initialMonth);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoadingMonth, setIsLoadingMonth] = useState(false);
+  const [isLoadingDay, setIsLoadingDay] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [dayMessage, setDayMessage] = useState<string | null>(null);
+  const [dayLoadFailed, setDayLoadFailed] = useState(false);
+  const [existingCode, setExistingCode] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [loadedMonth, setLoadedMonth] = useState({
     key: monthKey(initialMonth.year, initialMonth.monthIndex),
     message: initialMessage,
   });
   const requestIdRef = useRef(0);
+  const dayRequestIdRef = useRef(0);
+
+  const loadDay = useCallback(async (date: string) => {
+    const requestId = dayRequestIdRef.current + 1;
+    dayRequestIdRef.current = requestId;
+    setIsLoadingDay(true);
+    setDayMessage(null);
+    setDayLoadFailed(false);
+
+    try {
+      const result = await loadDayReportAction(date);
+
+      if (requestId !== dayRequestIdRef.current) return;
+
+      if (result.report) {
+        setValues({
+          date: result.report.date,
+          status: result.report.status,
+          well: result.report.well,
+          activity: result.report.activity,
+          notes: result.report.notes,
+        });
+        setExistingCode(result.report.code);
+      } else {
+        setValues({ ...EMPTY_VALUES, date });
+        setExistingCode(null);
+      }
+
+      setDayMessage(result.message);
+      setDayLoadFailed(result.message !== null);
+      setErrors({});
+    } catch {
+      if (requestId !== dayRequestIdRef.current) return;
+
+      setValues({ ...EMPTY_VALUES, date });
+      setExistingCode(null);
+      setDayMessage("No pudimos leer la hoja de cálculo. Intenta de nuevo.");
+      setDayLoadFailed(true);
+    } finally {
+      if (requestId === dayRequestIdRef.current) setIsLoadingDay(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => loadDay(today));
+  }, [loadDay, today]);
 
   async function requestMonth(next: { year: number; monthIndex: number }) {
     const requestId = requestIdRef.current + 1;
@@ -198,7 +232,33 @@ function ReportWorkspace({
     void requestMonth(next);
   }
 
+  function handleDateChange(date: string) {
+    setValues((current) => ({ ...current, date }));
+    setErrors((current) => {
+      if (!current.date) return current;
+      const next = { ...current };
+      delete next.date;
+      return next;
+    });
+    setShowSuccess(false);
+    setSaveError(null);
+
+    if (isAllowedReportDate(date, today)) {
+      void loadDay(date);
+      return;
+    }
+
+    setExistingCode(null);
+    setDayMessage(null);
+    setDayLoadFailed(false);
+  }
+
   function handleChange(field: ReportField, value: string) {
+    if (field === "date") {
+      handleDateChange(value);
+      return;
+    }
+
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => {
       if (!current[field]) return current;
@@ -207,6 +267,7 @@ function ReportWorkspace({
       return next;
     });
     setShowSuccess(false);
+    setSaveError(null);
   }
 
   function handleStatusChange(status: DayStatus) {
@@ -225,34 +286,71 @@ function ReportWorkspace({
       return next;
     });
     setShowSuccess(false);
+    setSaveError(null);
   }
 
-  function handleSubmit(): ReportErrors {
-    const nextErrors = validateReport(values, today);
-    setErrors(nextErrors);
+  async function handleSubmit(): Promise<ReportErrors> {
+    const clientErrors = validateReport(values, today);
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors);
       setShowSuccess(false);
-      return nextErrors;
+      return clientErrors;
     }
 
-    const status = values.status as DayStatus;
-    const report: DailyReport = {
-      id: crypto.randomUUID(),
-      date: values.date,
-      status,
-      well: status === "pozo" ? values.well.trim() : "",
-      activity: status === "pozo" ? values.activity.trim() : "",
-      notes: values.notes.trim(),
-    };
+    setIsSaving(true);
+    setSaveError(null);
+    setShowSuccess(false);
 
-    setSessionReports((current) => [...current, report]);
-    setSelectedDate(values.date);
-    const reportDate = parseLocalDate(values.date);
-    showMonth({ year: reportDate.getFullYear(), monthIndex: reportDate.getMonth() });
-    setShowSuccess(true);
+    try {
+      const result = await saveDayReportAction({
+        date: values.date,
+        status: values.status as DayStatus,
+        well: values.well,
+        activity: values.activity,
+        notes: values.notes,
+      });
 
-    return {};
+      if (Object.keys(result.errors).length > 0) {
+        setErrors(result.errors);
+        return result.errors;
+      }
+
+      if (!result.report) {
+        setSaveError(result.message ?? "No pudimos guardar el reporte. Intenta de nuevo.");
+        return {};
+      }
+
+      const saved = result.report;
+      const savedDate = parseLocalDate(saved.date);
+      const savedMonth = {
+        year: savedDate.getFullYear(),
+        monthIndex: savedDate.getMonth(),
+      };
+
+      setErrors({});
+      setValues({
+        date: saved.date,
+        status: saved.status,
+        well: saved.well,
+        activity: saved.activity,
+        notes: saved.notes,
+      });
+      setExistingCode(saved.code);
+      setSelectedDate(saved.date);
+      setShowSuccess(true);
+      setDayMessage(null);
+      setDayLoadFailed(false);
+      setVisibleMonth(savedMonth);
+      void requestMonth(savedMonth);
+
+      return {};
+    } catch {
+      setSaveError("No pudimos guardar el reporte. Intenta de nuevo.");
+      return {};
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleSelectDate(date: string) {
@@ -281,9 +379,10 @@ function ReportWorkspace({
   }
 
   function handleClear() {
-    setValues({ ...EMPTY_VALUES, date: today });
+    setValues({ ...EMPTY_VALUES, date: values.date });
     setErrors({});
     setShowSuccess(false);
+    setSaveError(null);
   }
 
   return (
@@ -293,7 +392,14 @@ function ReportWorkspace({
           values={values}
           errors={errors}
           today={today}
+          yesterday={yesterday}
           showSuccess={showSuccess}
+          isSaving={isSaving}
+          isLoadingDay={isLoadingDay}
+          dayMessage={dayMessage}
+          dayLoadFailed={dayLoadFailed}
+          existingCode={existingCode}
+          saveError={saveError}
           onChange={handleChange}
           onStatusChange={handleStatusChange}
           onSubmit={handleSubmit}

@@ -28,6 +28,72 @@ export function statusFromSheetCode(raw: string): SheetDayStatus {
   return SHEET_STATUS_CODES[code] ?? "pozo";
 }
 
+/** Código canónico que se escribe en la hoja para cada estado. */
+export const SHEET_CODE_BY_STATUS: Record<DayStatus, string> = {
+  base: "BA",
+  pozo: "ED",
+  descanso: "DE",
+  licencia: "LI",
+};
+
+/** Separa la actividad de las observaciones dentro de la nota de la hoja. */
+export const SHEET_NOTE_SEPARATOR = " · ";
+
+/** Nombre + número: SFRA099, SFRA 099, POZO-12. */
+export const WELL_PATTERN = /\b[A-Z]{2,}(?:[ -]?\d{2,})\b/i;
+
+export interface SheetNoteFields {
+  well: string;
+  activity: string;
+  notes: string;
+}
+
+/**
+ * Extrae pozo, actividad y observaciones de la nota de una celda. Solo los
+ * días de pozo intentan reconocer el pozo; el resto de la nota se conserva
+ * como observaciones.
+ */
+export function parseSheetNote(note: string, status: DayStatus | ""): SheetNoteFields {
+  const text = note.trim();
+
+  if (!text) return { well: "", activity: "", notes: "" };
+  if (status !== "pozo") return { well: "", activity: "", notes: text };
+
+  const match = WELL_PATTERN.exec(text);
+
+  if (!match) return { well: "", activity: "", notes: text };
+
+  const well = match[0].trim();
+  const rest = `${text.slice(0, match.index)} ${text.slice(
+    match.index + match[0].length,
+  )}`
+    .replace(/\s+/g, " ")
+    .trim();
+  const separator = rest.indexOf(SHEET_NOTE_SEPARATOR);
+
+  if (separator === -1) {
+    return { well, activity: rest, notes: "" };
+  }
+
+  return {
+    well,
+    activity: rest.slice(0, separator).trim(),
+    notes: rest.slice(separator + SHEET_NOTE_SEPARATOR.length).trim(),
+  };
+}
+
+/** Construye la nota de una celda en una sola línea. */
+export function serializeSheetNote(fields: SheetNoteFields, status: DayStatus): string {
+  const clean = (value: string) => value.replace(/\s+/g, " ").trim();
+  const notes = clean(fields.notes);
+
+  if (status !== "pozo") return notes;
+
+  const base = [clean(fields.well), clean(fields.activity)].filter(Boolean).join(" ");
+
+  return notes ? (base ? `${base}${SHEET_NOTE_SEPARATOR}${notes}` : notes) : base;
+}
+
 export interface ReportFormValues {
   date: string;
   status: DayStatus | "";
@@ -81,6 +147,23 @@ export function getTodayLocal(now: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Fecha local anterior a `iso`, con cambio de mes y año. */
+export function previousLocalDate(iso: string): string {
+  const date = parseLocalDate(iso);
+  date.setDate(date.getDate() - 1);
+  return getTodayLocal(date);
+}
+
+/** Único rango de fechas reportable: hoy y ayer. */
+export function getReportDateRange(today: string): { min: string; max: string } {
+  return { min: previousLocalDate(today), max: today };
+}
+
+export function isAllowedReportDate(date: string, today: string): boolean {
+  const { min, max } = getReportDateRange(today);
+  return date === min || date === max;
+}
+
 export function formatLongDate(iso: string): string {
   const match = ISO_DATE_PATTERN.exec(iso || "");
   if (!match) return "";
@@ -128,6 +211,7 @@ export function validateReport(
   today: string = getTodayLocal(),
 ): ReportErrors {
   const errors: ReportErrors = {};
+  const { min } = getReportDateRange(today);
   const well = values.well.trim();
   const activity = values.activity.trim();
   const notes = values.notes.trim();
@@ -138,6 +222,8 @@ export function validateReport(
     errors.date = "Usa el formato de calendario.";
   } else if (values.date > today) {
     errors.date = "La fecha no puede ser futura.";
+  } else if (values.date < min) {
+    errors.date = "Solo puedes reportar el día de hoy o el de ayer.";
   }
 
   if (!values.status || !DAY_STATUSES.includes(values.status)) {

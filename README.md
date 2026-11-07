@@ -23,8 +23,8 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Google Sheets
 
 La app lee el mes del empleado autenticado desde el libro **CUADRO DE PERSONAL 2026**
-mediante una cuenta de servicio (no usa el login de Google del usuario). Escribir en
-la hoja al generar un reporte queda pendiente.
+y guarda el reporte del día en la celda correspondiente, todo mediante una cuenta de
+servicio (no usa el login de Google del usuario).
 
 ### Credenciales
 
@@ -49,12 +49,16 @@ npm run sheets:check -- tabs                          # pestañas del libro
 npm run sheets:check -- employees 2026-11-05          # empleados del mes
 npm run sheets:check -- read "LUIS AREVALO" 2026-11-05
 npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
+npm run sheets:check -- write AVD12 2026-11-06 ED --note "SFRA100 TRZ · Cambio de sarta" --yes
 npm run sheets:check -- month AVD12 2026-11           # días traducidos + notas
 ```
 
 `month` acepta cualquier identificador de la columna A (código de 5 caracteres u
 ObjectId), imprime una línea por día con el estado traducido y añade la nota de la
-casilla cuando existe. Es solo diagnóstico: la app no lo usa.
+casilla cuando existe. `read` imprime el código y la nota actuales. `write` exige
+`--yes` y escribe valor y nota con el mismo `batchUpdate`/`updateCells` que usa la
+app; `--note` es opcional y por defecto deja la nota vacía. Es solo diagnóstico: la
+app no lo usa.
 
 ### Estructura de la hoja
 
@@ -67,12 +71,23 @@ casilla cuando existe. Es solo diagnóstico: la app no lo usa.
 - Al renderizar `/`, después de `requireSession()`, `app/page.tsx` busca el `employee_code` del empleado en la **columna A** de la pestaña del mes y arma sus días.
 - Cada cambio de mes (anterior, siguiente, "Hoy" o clic en un día vecino) llama a `loadMonthReportsAction`, que lee de nuevo la hoja sin caché.
 - Traducción de la casilla: `DE` → descanso, `BA` → base, `LI` → licencia; `FE` y vacío se omiten; cualquier otro código (`ED`, `EN`, `OD`, `V`, `F`…) → pozo.
-- Las notas de las casillas se muestran como observaciones y el código original se conserva como etiqueta junto al estado.
-- Los días de la hoja no traen pozo ni actividad; el histórico solo muestra esos bloques cuando tienen texto.
-- Si el código no aparece en el mes, se muestra un aviso neutro. Si falla Google (credenciales, red, permisos), `/` no falla: muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.`
-- Los reportes generados con el formulario siguen en memoria de la sesión y no se pierden al cambiar de mes.
+- Las notas se parsean con `parseSheetNote`: en un día de pozo, `SFRA099 ILT` llena **Pozo** y **Actividad realizada**; el resto (` · ` seguido de texto) va a **Observaciones**. En estados que no son pozo, toda la nota es observaciones.
+- El código original se conserva como etiqueta junto al estado.
+- Si el día no tiene valor ni nota, el formulario queda vacío con la fecha elegida. Si el código no aparece en el mes, se muestra un aviso neutro. Si falla Google (credenciales, red, permisos), `/` no falla: muestra `No pudimos leer la hoja de cálculo. Intenta de nuevo.`
+- No hay caché: cada cambio de mes y cada carga de día vuelven a leer la hoja.
 
-Código: `lib/sheets/client.ts` (auth + API), `lib/sheets/layout.ts` (pestañas, columnas, empleados, lectura y escritura de un día), `lib/sheets/month.ts` (carga del mes), `app/actions/sheet.ts` (Server Action) y `lib/report.ts` (tipos, traducción y fechas).
+### Guardado del día
+
+- Solo se puede reportar **hoy** y **ayer**, según la fecha del servidor (`getTodayLocal()`). `app/page.tsx` calcula `serverToday`, el input usa `min`/`max` y `saveDayReportAction` vuelve a validar con su propia fecha; el navegador no decide el rango. El despliegue debe usar la zona horaria de la operación (America/Bogota).
+- Al entrar a `/`, el formulario carga el día de hoy desde la hoja; al cambiar la fecha a ayer, carga ese día. El calendario lateral no cambia la fecha del formulario.
+- `saveEmployeeDay` escribe el valor y la nota en una sola llamada `batchUpdate`/`updateCells` (`fields: "userEnteredValue,note"`), así que el formato de la celda se conserva.
+- Códigos canónicos: `base = BA`, `pozo = ED`, `descanso = DE`, `licencia = LI`. Si la celda ya tiene un código que traduce al mismo estado (`ED`, `EN`, `V`…), se conserva; `FE` y vacío siempre se reemplazan.
+- Formato de la nota: `pozo actividad` y, si hay observaciones, `pozo actividad · observaciones`; en los demás estados, solo observaciones. Los saltos de línea se normalizan a espacios.
+- El botón dice **Guardar reporte** (**Guardando…** mientras guarda) y la confirmación **Reporte guardado** se oculta con cualquier edición. **Limpiar** vacía el formulario pero no borra la hoja.
+- No hay confirmación de sobrescritura, historial de cambios ni control de concurrencia: gana la última escritura.
+- La cuenta de servicio necesita permiso **Editor** para guardar.
+
+Código: `lib/sheets/client.ts` (auth + API + escritura de celda), `lib/sheets/layout.ts` (pestañas, columnas, empleados), `lib/sheets/day.ts` (carga y guardado de un día), `lib/sheets/month.ts` (carga del mes), `app/actions/sheet.ts` (Server Actions) y `lib/report.ts` (tipos, traducción, parser de notas y fechas).
 
 ## Supabase
 
@@ -119,7 +134,7 @@ Credenciales inválidas muestran siempre "Correo o contraseña incorrectos.", si
 
 ### Alcance
 
-La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). La carga del mes desde Google Sheets está implementada (SPEC 06): `/` lee el mes del empleado autenticado y lo recarga al cambiar de mes. Persistir en Supabase o escribir en Google Sheets los reportes generados con el formulario sigue pendiente.
+La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). La carga del mes y el guardado del reporte en Google Sheets están implementados (SPEC 06 y SPEC 07): `/` lee el mes del empleado autenticado, carga el día seleccionado, lo guarda en la celda y solo permite hoy o ayer. Persistir los reportes en Supabase sigue pendiente.
 
 ## Learn More
 

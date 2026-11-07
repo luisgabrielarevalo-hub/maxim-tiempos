@@ -111,10 +111,15 @@ export function columnLetter(column: number): string {
   return label;
 }
 
+/** Índice de columna (1 = A) del día de una fecha. */
+export function dayColumnIndexForDate(iso: string): number {
+  const { day } = parseIsoDate(iso);
+  return FIRST_DAY_COLUMN + day - 1;
+}
+
 /** Columna del día (C = 1 … AG = 31). */
 export function dayColumnForDate(iso: string): string {
-  const { day } = parseIsoDate(iso);
-  return columnLetter(FIRST_DAY_COLUMN + day - 1);
+  return columnLetter(dayColumnIndexForDate(iso));
 }
 
 /** Rango A1 de la celda de un empleado en un día. */
