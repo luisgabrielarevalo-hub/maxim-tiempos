@@ -5,6 +5,7 @@ import {
   formatLongDate,
   formatMonthLabel,
   getMonthMatrix,
+  isFutureMonth,
   type DailyReport,
   type DayStatus,
 } from "@/lib/report";
@@ -40,6 +41,9 @@ export default function ReportCalendar({
   const matrix = getMonthMatrix(year, monthIndex);
   const monthPrefix = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
   const monthCount = reports.filter((report) => report.date.startsWith(monthPrefix)).length;
+  const nextMonth =
+    monthIndex === 11 ? { year: year + 1, monthIndex: 0 } : { year, monthIndex: monthIndex + 1 };
+  const canGoNext = !isFutureMonth(nextMonth.year, nextMonth.monthIndex, today);
 
   const statusByDate = new Map<string, DayStatus>();
   for (const report of reports) {
@@ -66,8 +70,9 @@ export default function ReportCalendar({
           <button
             type="button"
             onClick={onNextMonth}
+            disabled={!canGoNext}
             aria-label="Mes siguiente"
-            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none"
+            className="inline-flex size-7 items-center justify-center rounded-md border border-input bg-card text-foreground transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card"
           >
             <ChevronRightIcon />
           </button>
@@ -110,6 +115,7 @@ export default function ReportCalendar({
                 const inMonth = date.startsWith(monthPrefix);
                 const isToday = date === today;
                 const isSelected = date === selectedDate;
+                const isFuture = date > today;
                 const status = statusByDate.get(date);
 
                 return (
@@ -119,11 +125,14 @@ export default function ReportCalendar({
                       onClick={() => onSelectDate(date)}
                       aria-label={formatLongDate(date) || date}
                       aria-pressed={isSelected}
+                      disabled={isFuture}
                       className={`relative aspect-square w-full rounded-md text-sm transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/35 focus-visible:outline-none ${
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : `hover:bg-muted ${inMonth ? "text-foreground" : "text-muted-foreground/55"}`
-                      } ${isToday ? "shadow-[inset_0_0_0_1px_var(--ring)]" : ""}`}
+                      } ${isToday ? "shadow-[inset_0_0_0_1px_var(--ring)]" : ""} ${
+                        isFuture ? "cursor-not-allowed opacity-40 hover:bg-transparent" : ""
+                      }`}
                     >
                       {dayNumber}
                       {status ? (

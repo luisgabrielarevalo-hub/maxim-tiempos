@@ -6,6 +6,7 @@ import type { CurrentEmployee } from "@/lib/auth";
 import {
   daysInMonth,
   isAllowedReportDate,
+  isFutureMonth,
   monthKey,
   parseLocalDate,
   previousLocalDate,
@@ -388,10 +389,15 @@ function ReportWorkspace({
   }
 
   function handleNextMonth() {
-    showMonth({
-      year: visibleMonth.monthIndex === 11 ? visibleMonth.year + 1 : visibleMonth.year,
-      monthIndex: (visibleMonth.monthIndex + 1) % 12,
-    });
+    const next =
+      visibleMonth.monthIndex === 11
+        ? { year: visibleMonth.year + 1, monthIndex: 0 }
+        : { year: visibleMonth.year, monthIndex: visibleMonth.monthIndex + 1 };
+
+    // El histórico nunca navega a un mes futuro.
+    if (isFutureMonth(next.year, next.monthIndex, today)) return;
+
+    showMonth(next);
   }
 
   function handleToday() {
