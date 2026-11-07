@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getTodayLocal, monthKey, parseLocalDate } from "@/lib/report";
-import { getValues } from "./client";
+import { getValues, logSheetsError } from "./client";
 import { findEmployeeRow, monthTabForMonth, totalRestDaysCell } from "./layout";
 
 export interface RestDaysSummary {
@@ -52,7 +52,8 @@ export async function loadEmployeeRestDays(
       restDays: formatRestDays(values[0]?.[0] ?? ""),
       message: null,
     };
-  } catch {
+  } catch (error) {
+    logSheetsError("loadEmployeeRestDays", error);
     return { month, restDays: null, message: GENERIC_ERROR };
   }
 }

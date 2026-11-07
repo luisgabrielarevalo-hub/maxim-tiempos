@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentEmployee } from "@/lib/supabase/session";
+import { logSheetsError } from "@/lib/sheets/client";
 import { loadEmployeeMonth, type MonthReports } from "@/lib/sheets/month";
 import {
   loadEmployeeRestDays,
@@ -77,7 +78,8 @@ export async function loadRestDaysAction(): Promise<RestDaysSummary> {
       restDays: null,
       message: NO_EMPLOYEE,
     };
-  } catch {
+  } catch (error) {
+    logSheetsError("loadRestDaysAction", error);
     return {
       month: "",
       restDays: null,
@@ -100,7 +102,8 @@ export async function loadDayReportAction(date: string): Promise<DayReportResult
     }
 
     return loadEmployeeDay(employee.employeeCode, date);
-  } catch {
+  } catch (error) {
+    logSheetsError(`loadDayReportAction ${date}`, error);
     return {
       date,
       report: null,
@@ -177,7 +180,8 @@ export async function saveDayReportAction(
       errors: {},
       message: result.message ?? (result.report ? null : GENERIC_SAVE_ERROR),
     };
-  } catch {
+  } catch (error) {
+    logSheetsError(`saveDayReportAction ${input.date}`, error);
     return { report: null, errors: {}, message: GENERIC_SAVE_ERROR };
   }
 }

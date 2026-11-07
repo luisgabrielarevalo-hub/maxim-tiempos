@@ -9,7 +9,12 @@ import {
   statusFromSheetCode,
   type DayStatus,
 } from "@/lib/report";
-import { getRowCells, getValues, updateCell } from "./client";
+import {
+  getRowCells,
+  getValues,
+  logSheetsError,
+  updateCell,
+} from "./client";
 import {
   columnLetter,
   dayColumnIndexForDate,
@@ -82,7 +87,8 @@ export async function loadEmployeeDay(
       },
       message: null,
     };
-  } catch {
+  } catch (error) {
+    logSheetsError(`loadEmployeeDay ${date}`, error);
     return { date, report: null, message: GENERIC_ERROR };
   }
 }
@@ -137,7 +143,8 @@ export async function saveEmployeeDay(
       },
       message: null,
     };
-  } catch {
+  } catch (error) {
+    logSheetsError(`saveEmployeeDay ${date}`, error);
     return { report: null, message: GENERIC_SAVE_ERROR };
   }
 }

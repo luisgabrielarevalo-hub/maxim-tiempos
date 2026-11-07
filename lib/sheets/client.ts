@@ -57,48 +57,131 @@ interface ServiceAccountCredentials {
   key: string;
 }
 
+interface ServiceAccountJson {
+  client_email?: string;
+  private_key?: string;
+}
+
 let authClient: JWT | null = null;
 
+/** Quita comillas envolventes y normaliza los `\n` escapados de la clave. */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+
+  return key.replace(/\\n/g, "\n").trim();
+}
+
+function parseCredentials(
+  raw: string,
+  source: string,
+): ServiceAccountCredentials {
+  let parsed: ServiceAccountJson;
+
+  try {
+    parsed = JSON.parse(raw) as ServiceAccountJson;
+  } catch {
+    throw new SheetsError(
+      `${source} no contiene un JSON de cuenta de servicio válido.`,
+    );
+  }
+
+  if (!parsed.client_email || !parsed.private_key) {
+    throw new SheetsError(
+      `${source} no tiene client_email ni private_key.`,
+    );
+  }
+
+  return {
+    email: parsed.client_email.trim(),
+    key: normalizePrivateKey(parsed.private_key),
+  };
+}
+
+/** Acepta el JSON tal cual o en base64, cuando el panel no admite saltos. */
+function decodeJsonEnv(value: string): string | null {
+  const text = value.trim();
+
+  if (text.startsWith("{")) return text;
+
+  const decoded = Buffer.from(text, "base64").toString("utf8").trim();
+
+  return decoded.startsWith("{") ? decoded : null;
+}
+
 async function loadCredentials(): Promise<ServiceAccountCredentials> {
-  const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE?.trim();
+  const rawJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
 
-  if (keyFile) {
-    const { readFile } = await import("node:fs/promises");
-    let raw: string;
+  if (rawJson) {
+    const json = decodeJsonEnv(rawJson);
 
-    try {
-      raw = await readFile(keyFile, "utf8");
-    } catch {
-      throw new SheetsError(`No pude leer la clave de servicio en "${keyFile}".`);
-    }
-
-    const parsed = JSON.parse(raw) as {
-      client_email?: string;
-      private_key?: string;
-    };
-
-    if (!parsed.client_email || !parsed.private_key) {
+    if (!json) {
       throw new SheetsError(
-        `"${keyFile}" no es una clave de cuenta de servicio válida.`,
+        "GOOGLE_SERVICE_ACCOUNT_JSON no contiene un JSON válido.",
       );
     }
 
-    return { email: parsed.client_email, key: parsed.private_key };
+    return parseCredentials(json, "GOOGLE_SERVICE_ACCOUNT_JSON");
+  }
+
+  const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE?.trim();
+
+  if (keyFile) {
+    // En un despliegue sin sistema de archivos el valor puede ser el JSON mismo.
+    if (keyFile.startsWith("{")) {
+      return parseCredentials(keyFile, "GOOGLE_SERVICE_ACCOUNT_KEY_FILE");
+    }
+
+    const { readFile } = await import("node:fs/promises");
+
+    try {
+      return parseCredentials(
+        await readFile(keyFile, "utf8"),
+        `"${keyFile}"`,
+      );
+    } catch (error) {
+      if (error instanceof SheetsError) throw error;
+
+      console.warn(
+        `[sheets] No pude leer GOOGLE_SERVICE_ACCOUNT_KEY_FILE ("${keyFile}"); intento con GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.`,
+      );
+    }
   }
 
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n",
-  ).trim();
+  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+    ? normalizePrivateKey(process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY)
+    : "";
 
   if (!email || !key) {
     throw new SheetsError(
-      "Faltan credenciales de Google Sheets: define GOOGLE_SERVICE_ACCOUNT_KEY_FILE o GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.",
+      "Faltan credenciales de Google Sheets: define GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SERVICE_ACCOUNT_KEY_FILE o GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.",
     );
   }
 
   return { email, key };
+}
+
+/** Motivo legible del fallo; solo para logs del servidor. */
+export function describeSheetsError(error: unknown): string {
+  if (error instanceof SheetsError) {
+    return error.status
+      ? `${error.message} (HTTP ${error.status})`
+      : error.message;
+  }
+
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** La interfaz mantiene el aviso genérico; el detalle queda en los logs. */
+export function logSheetsError(context: string, error: unknown): void {
+  console.error(`[sheets] ${context}: ${describeSheetsError(error)}`);
 }
 
 async function getAuthClient(): Promise<JWT> {

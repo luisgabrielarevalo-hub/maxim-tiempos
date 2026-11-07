@@ -8,7 +8,7 @@ import {
   statusFromSheetCode,
   type DailyReport,
 } from "@/lib/report";
-import { getRowCells } from "./client";
+import { getRowCells, logSheetsError } from "./client";
 import {
   FIRST_DAY_COLUMN,
   columnLetter,
@@ -83,7 +83,8 @@ export async function loadEmployeeMonth(
           ? `No hay días registrados para ti en ${MONTH_NAMES[monthIndex]}.`
           : null,
     };
-  } catch {
+  } catch (error) {
+    logSheetsError("loadEmployeeMonth", error);
     return { month, reports: [], message: GENERIC_ERROR };
   }
 }

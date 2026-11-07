@@ -38,8 +38,11 @@ Variables:
 | Variable | Uso |
 | --- | --- |
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | Id del libro |
-| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Ruta al JSON de la cuenta de servicio (local) |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Ruta al JSON de la cuenta de servicio (solo local) |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON completo de la cuenta de servicio, tal cual o en base64 (despliegue) |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | Alternativa para despliegue |
+
+En Vercel **no** sirve `GOOGLE_SERVICE_ACCOUNT_KEY_FILE`: `secrets/` está ignorado por git, así que el archivo no existe en el servidor y toda lectura devuelve el aviso genérico. Configura `GOOGLE_SERVICE_ACCOUNT_JSON` o `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (con los `\n` escapados) en el entorno **Production**. Cuando el aviso aparece en la app, el motivo real queda en los logs del servidor con el prefijo `[sheets]`.
 
 ### Comandos
 
