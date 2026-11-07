@@ -6,6 +6,8 @@
 > **Objetivo:** Implementar en Next.js la pantalla `/` (home) a partir del prototipo `Referencias/reporte-diario-campo.html`, con formulario validado, histórico en memoria y calendario, usando íconos lineales de temática petrolera.
 >
 > **Nota (SPEC 06):** el histórico en memoria descrito aquí fue reemplazado por la carga del mes desde Google Sheets. Los reportes generados con el formulario siguen siendo de sesión y se guardan aparte. Ver `specs/06-carga-mes-google-sheets.md`.
+>
+> **Nota (SPEC 07):** la persistencia de sesión (`sessionReports`) y la validación de fechas descritas aquí fueron reemplazadas: el reporte se guarda en Google Sheets y solo se permite hoy o ayer. Ver `specs/07-guardado-reporte-google-sheets.md`.
 
 ---
 

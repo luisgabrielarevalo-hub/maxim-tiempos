@@ -4,6 +4,8 @@
 > **Depende de:** SPEC 01 (reporte diario), SPEC 05 (login real y protección de rutas)
 > **Fecha:** 2026-11-06
 > **Objetivo:** al iniciar sesión, y cada vez que el empleado cambia de mes en el calendario, cargar desde la pestaña del mes de **CUADRO DE PERSONAL 2026** los días del empleado autenticado (buscado por `employee_code` en la columna A), traducir cada código al estado de la app y usar la nota de la casilla como observaciones.
+>
+> **Nota (SPEC 07):** la decisión de mantener la app en solo lectura quedó reemplazada: el formulario ya escribe en la hoja, carga el día seleccionado y la nota se parsea en pozo, actividad y observaciones. Ver `specs/07-guardado-reporte-google-sheets.md`.
 
 ---
 
