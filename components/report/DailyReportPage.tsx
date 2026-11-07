@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 
 import type { CurrentEmployee } from "@/lib/auth";
 import {
   daysInMonth,
-  getTodayLocal,
   monthKey,
   parseLocalDate,
   validateReport,
@@ -30,18 +29,9 @@ const EMPTY_VALUES: ReportFormValues = {
   notes: "",
 };
 
-const emptySubscribe = () => () => {};
-
-function useTodayLocal(): string | null {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => getTodayLocal(),
-    () => null,
-  );
-}
-
 interface DailyReportPageProps {
   employee: CurrentEmployee | null;
+  today: string;
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
@@ -49,12 +39,11 @@ interface DailyReportPageProps {
 
 export default function DailyReportPage({
   employee,
+  today,
   initialMonth,
   initialReports,
   initialMessage,
 }: DailyReportPageProps) {
-  const today = useTodayLocal();
-
   return (
     <>
       <div
@@ -94,26 +83,13 @@ export default function DailyReportPage({
         </div>
       </header>
 
-      {today ? (
-        <ReportWorkspace
-          today={today}
-          initialMonth={initialMonth}
-          initialReports={initialReports}
-          initialMessage={initialMessage}
-        />
-      ) : (
-        <WorkspaceSkeleton />
-      )}
+      <ReportWorkspace
+        today={today}
+        initialMonth={initialMonth}
+        initialReports={initialReports}
+        initialMessage={initialMessage}
+      />
     </>
-  );
-}
-
-function WorkspaceSkeleton() {
-  return (
-    <main className="mx-auto grid w-full max-w-6xl gap-7 px-4 pt-8 pb-16 min-[960px]:grid-cols-[minmax(0,1fr)_360px] min-[960px]:gap-9 min-[960px]:px-6 min-[960px]:pt-10">
-      <div className="min-h-[560px] overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]" />
-      <div className="min-h-[420px]" />
-    </main>
   );
 }
 
