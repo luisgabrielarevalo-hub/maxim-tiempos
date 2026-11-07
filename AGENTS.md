@@ -57,7 +57,7 @@ Run from the repo root.
 
 ## Google Sheets
 
-- The workbook is **CUADRO DE PERSONAL 2026** (`GOOGLE_SHEETS_SPREADSHEET_ID`), read with a service account (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE` or `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`). The app never uses the employee's Google login.
+- The workbook is **CUADRO DE PERSONAL 2026** (`GOOGLE_SHEETS_SPREADSHEET_ID`), read with a service account (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE` locally, or `GOOGLE_SERVICE_ACCOUNT_JSON` / `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` on Vercel, where the key file does not exist). The app never uses the employee's Google login. `lib/sheets/client.ts` logs the real failure with the `[sheets]` prefix while the UI keeps the generic Spanish message.
 - Load flow: `app/page.tsx` calls `requireSession()`, then `getCurrentEmployee()` and `loadEmployeeMonth(employee.employeeCode, year, monthIndex)`; the client reloads through `loadMonthReportsAction` (`app/actions/sheet.ts`) whenever the visible month changes. The action receives only `year` and `monthIndex`; identity always comes from the session.
 - Identification: the employee code is matched against column `A` (`A7:A200`), trimmed and uppercased. A row with a name but no code is a section header and is ignored. No match → empty month with a neutral message (there is no fallback by name or ObjectId).
 - Days: `C` = day 1 … `AG` = day 31, cut at `daysInMonth(year, monthIndex)`. Each day is read with values **and** `CellData.note` in one grid-data call; the note becomes `notes`.
