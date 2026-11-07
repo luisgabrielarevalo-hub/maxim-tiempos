@@ -16,6 +16,7 @@ import {
   type RegisterField,
   type RegisterFormValues,
 } from "@/lib/auth";
+import { isNextFlowError } from "@/lib/next-errors";
 
 interface RegisterFormProps {
   initialCode: string;
@@ -133,12 +134,17 @@ export default function RegisterForm({
         setNotice({ variant: "mal", message: result.message });
         if (result.errors) focusFirstError(result.errors);
       }
-    } catch {
+
+      setIsLoading(false);
+    } catch (error) {
+      // El redirect del servidor rechaza con un error interno de Next aunque
+      // la navegación ya esté en curso; no se muestra como fallo.
+      if (isNextFlowError(error)) return;
+
       setNotice({
         variant: "mal",
         message: "No pudimos completar el registro. Intenta de nuevo.",
       });
-    } finally {
       setIsLoading(false);
     }
   }

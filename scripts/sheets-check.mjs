@@ -10,6 +10,7 @@
  *   npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
  *   npm run sheets:check -- write AVD12 2026-11-06 ED --note "SFRA100 TRZ · Cambio de sarta" --yes
  *   npm run sheets:check -- month AVD12 2026-11
+ *   npm run sheets:check -- total AVD12 [YYYY-MM]
  *
  * Necesita GOOGLE_SHEETS_SPREADSHEET_ID y las credenciales de la cuenta de
  * servicio en el entorno (ver .env.example).
@@ -25,6 +26,8 @@ const MONTHS = [
 const FIRST_DAY_COLUMN = 3;
 const EMPLOYEE_FIRST_ROW = 7;
 const EMPLOYEE_LAST_ROW = 200;
+const TOTAL_REST_DAYS_COLUMN = 46;
+const TOTAL_REST_DAYS_HEADER_ROW = 6;
 
 const [, , command = "summary", ...args] = process.argv;
 
@@ -89,6 +92,14 @@ function dayColumnIndex(iso) {
 
 function dayColumn(iso) {
   return columnLetter(dayColumnIndex(iso));
+}
+
+function formatRestDays(raw) {
+  const text = String(raw ?? "").trim();
+  if (!text) return "—";
+  const value = Number(text);
+  if (!Number.isFinite(value)) return text;
+  return new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(value);
 }
 
 function normalize(value) {
@@ -327,7 +338,42 @@ async function printMonth(employeeKey, monthArg) {
     );
   }
 
-  console.log();
+  const totalColumn = columnLetter(TOTAL_REST_DAYS_COLUMN);
+  const totalValues = await getValues(`${tab}!${totalColumn}${row}`);
+  const totalRaw = totalValues[0]?.[0] ?? "";
+
+  console.log(
+    `\n  TOTAL DE DIAS A DESCANSAR (${totalColumn}${row}): ${JSON.stringify(totalRaw)} → ${formatRestDays(totalRaw)} días\n`,
+  );
+}
+
+async function printTotal(employeeKey, monthArg) {
+  const month = monthArg ?? todayLocal().slice(0, 7);
+  const { year, monthIndex } = parseMonthArg(month);
+  const tab = MONTHS[monthIndex];
+  const row = await findRowByCode(employeeKey, monthIndex);
+
+  if (row === null) {
+    fail(`No encontré "${employeeKey}" en la columna A de ${tab}.`);
+  }
+
+  const totalColumn = columnLetter(TOTAL_REST_DAYS_COLUMN);
+  const headerRange = `${tab}!${totalColumn}${TOTAL_REST_DAYS_HEADER_ROW}`;
+  const valueRange = `${tab}!${totalColumn}${row}`;
+  const [headerValues, valueValues] = await Promise.all([
+    getValues(headerRange),
+    getValues(valueRange),
+  ]);
+  const header = headerValues[0]?.[0] ?? "";
+  const raw = valueValues[0]?.[0] ?? "";
+
+  console.log(
+    `\nCUADRO DE PERSONAL ${year} · ${tab} · ${employeeKey.trim()} (fila ${row})`,
+  );
+  console.log(`  ${totalColumn}${TOTAL_REST_DAYS_HEADER_ROW}: ${JSON.stringify(header)}`);
+  console.log(
+    `  ${totalColumn}${row}: ${JSON.stringify(raw)} → ${formatRestDays(raw)} días\n`,
+  );
 }
 
 switch (command) {
@@ -342,6 +388,13 @@ switch (command) {
   case "month": {
     const [employeeKey, month] = args;
     await printMonth(employeeKey, month);
+    break;
+  }
+
+  case "total": {
+    const [employeeKey, month] = args;
+    if (!employeeKey) fail("Uso: total <id> [YYYY-MM]");
+    await printTotal(employeeKey, month);
     break;
   }
 
@@ -400,7 +453,7 @@ switch (command) {
       console.log(`  fila ${String(employee.row).padStart(3)}  ${employee.name}`);
     }
     console.log(
-      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> [--note \"texto\"] --yes | month <id> YYYY-MM\n",
+      "\nComandos: tabs | employees [fecha] | read <empleado> [fecha] | write <empleado> <fecha> <código> [--note \"texto\"] --yes | month <id> YYYY-MM | total <id> [YYYY-MM]\n",
     );
     break;
   }

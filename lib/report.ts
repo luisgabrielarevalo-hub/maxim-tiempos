@@ -189,6 +189,21 @@ export function monthKey(year: number, monthIndex: number): string {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
+/** `true` si el mes (`monthIndex` cero-based) es posterior al mes de `today`. */
+export function isFutureMonth(year: number, monthIndex: number, today: string): boolean {
+  return monthKey(year, monthIndex) > today.slice(0, 7);
+}
+
+/** Primer mes navegable del histórico: enero del año de `today` (`YYYY-MM`). */
+export function firstReportMonth(today: string): string {
+  return `${today.slice(0, 4)}-01`;
+}
+
+/** `true` si el mes (`monthIndex` cero-based) es anterior a enero del año de `today`. */
+export function isBeforeFirstMonth(year: number, monthIndex: number, today: string): boolean {
+  return monthKey(year, monthIndex) < firstReportMonth(today);
+}
+
 /**
  * Builds a 6 × 7 calendar matrix of local `YYYY-MM-DD` strings for the given
  * month. `monthIndex` is zero-based, matching the native `Date` API. Weeks

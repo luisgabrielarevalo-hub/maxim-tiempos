@@ -6,6 +6,8 @@ import type { CurrentEmployee } from "@/lib/auth";
 import {
   daysInMonth,
   isAllowedReportDate,
+  isBeforeFirstMonth,
+  isFutureMonth,
   monthKey,
   parseLocalDate,
   previousLocalDate,
@@ -19,6 +21,7 @@ import {
 import {
   loadDayReportAction,
   loadMonthReportsAction,
+  loadRestDaysAction,
   saveDayReportAction,
 } from "@/app/actions/sheet";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -26,6 +29,7 @@ import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
 import ReportForm from "./ReportForm";
 import ReportHistory from "./ReportHistory";
+import RestDaysCard from "./RestDaysCard";
 
 const EMPTY_VALUES: ReportFormValues = {
   date: "",
@@ -41,6 +45,7 @@ interface DailyReportPageProps {
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
+  initialRestDays: string | null;
 }
 
 export default function DailyReportPage({
@@ -49,6 +54,7 @@ export default function DailyReportPage({
   initialMonth,
   initialReports,
   initialMessage,
+  initialRestDays,
 }: DailyReportPageProps) {
   return (
     <>
@@ -94,6 +100,7 @@ export default function DailyReportPage({
         initialMonth={initialMonth}
         initialReports={initialReports}
         initialMessage={initialMessage}
+        initialRestDays={initialRestDays}
       />
     </>
   );
@@ -104,6 +111,7 @@ interface ReportWorkspaceProps {
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
+  initialRestDays: string | null;
 }
 
 function ReportWorkspace({
@@ -111,6 +119,7 @@ function ReportWorkspace({
   initialMonth,
   initialReports,
   initialMessage,
+  initialRestDays,
 }: ReportWorkspaceProps) {
   const todayDate = parseLocalDate(today);
   const yesterday = previousLocalDate(today);
@@ -118,6 +127,7 @@ function ReportWorkspace({
   const [errors, setErrors] = useState<ReportErrors>({});
   const [sheetReports, setSheetReports] = useState<DailyReport[]>(initialReports);
   const reports = sheetReports;
+  const [restDays, setRestDays] = useState<string | null>(initialRestDays);
   const [selectedDate, setSelectedDate] = useState(() => {
     const isTodayInInitialMonth =
       todayDate.getFullYear() === initialMonth.year &&
@@ -213,6 +223,18 @@ function ReportWorkspace({
       });
     } finally {
       if (requestId === requestIdRef.current) setIsLoadingMonth(false);
+    }
+  }
+
+  async function refreshRestDays() {
+    try {
+      const result = await loadRestDaysAction();
+
+      // Un fallo de lectura devuelve `message`; se conserva el último valor
+      // conocido y un vacío real de la hoja (`message: null`) sigue mostrando `—`.
+      if (!result.message) setRestDays(result.restDays);
+    } catch {
+      // Conserva el último valor conocido; el guardado ya se confirmó.
     }
   }
 
@@ -343,6 +365,7 @@ function ReportWorkspace({
       setDayLoadFailed(false);
       setVisibleMonth(savedMonth);
       void requestMonth(savedMonth);
+      void refreshRestDays();
 
       return {};
     } catch {
@@ -355,22 +378,37 @@ function ReportWorkspace({
 
   function handleSelectDate(date: string) {
     const parsed = parseLocalDate(date);
+    const next = { year: parsed.getFullYear(), monthIndex: parsed.getMonth() };
+
+    // El histórico nunca navega a un mes anterior a enero del año en curso.
+    if (isBeforeFirstMonth(next.year, next.monthIndex, today)) return;
+
     setSelectedDate(date);
-    showMonth({ year: parsed.getFullYear(), monthIndex: parsed.getMonth() });
+    showMonth(next);
   }
 
   function handlePreviousMonth() {
-    showMonth({
-      year: visibleMonth.monthIndex === 0 ? visibleMonth.year - 1 : visibleMonth.year,
-      monthIndex: (visibleMonth.monthIndex + 11) % 12,
-    });
+    const previous =
+      visibleMonth.monthIndex === 0
+        ? { year: visibleMonth.year - 1, monthIndex: 11 }
+        : { year: visibleMonth.year, monthIndex: visibleMonth.monthIndex - 1 };
+
+    // El histórico nunca navega a un mes anterior a enero del año en curso.
+    if (isBeforeFirstMonth(previous.year, previous.monthIndex, today)) return;
+
+    showMonth(previous);
   }
 
   function handleNextMonth() {
-    showMonth({
-      year: visibleMonth.monthIndex === 11 ? visibleMonth.year + 1 : visibleMonth.year,
-      monthIndex: (visibleMonth.monthIndex + 1) % 12,
-    });
+    const next =
+      visibleMonth.monthIndex === 11
+        ? { year: visibleMonth.year + 1, monthIndex: 0 }
+        : { year: visibleMonth.year, monthIndex: visibleMonth.monthIndex + 1 };
+
+    // El histórico nunca navega a un mes futuro.
+    if (isFutureMonth(next.year, next.monthIndex, today)) return;
+
+    showMonth(next);
   }
 
   function handleToday() {
@@ -422,6 +460,7 @@ function ReportWorkspace({
         </header>
 
         <div className="pt-5">
+          <RestDaysCard restDays={restDays} />
           <ReportCalendar
             reports={reports}
             selectedDate={selectedDate}

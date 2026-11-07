@@ -39,7 +39,8 @@ export async function proxy(request: NextRequest) {
     return copySessionCookies(response, NextResponse.redirect(url, 307));
   }
 
-  if (hasSession && pathname === "/login") {
+  // Con sesión, las rutas de invitado (login y registro) llevan a la bitácora.
+  if (hasSession && isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";

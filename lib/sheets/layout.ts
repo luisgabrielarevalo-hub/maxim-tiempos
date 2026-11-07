@@ -43,6 +43,9 @@ export const EMPLOYEE_FIRST_ROW = 7;
 /** Última fila que se revisa al buscar empleados. */
 export const EMPLOYEE_LAST_ROW = 200;
 
+/** Columna "TOTAL DE DIAS A DESCANSAR" (AT) de la pestaña del mes. */
+export const TOTAL_REST_DAYS_COLUMN = 46;
+
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export interface SheetEmployee {
@@ -125,6 +128,11 @@ export function dayColumnForDate(iso: string): string {
 /** Rango A1 de la celda de un empleado en un día. */
 export function dayCell(employee: SheetEmployee, iso: string): string {
   return `${monthTabForDate(iso)}!${dayColumnForDate(iso)}${employee.row}`;
+}
+
+/** Rango A1 de la celda del total de días a descansar de una fila. */
+export function totalRestDaysCell(tab: string, row: number): string {
+  return `${tab}!${columnLetter(TOTAL_REST_DAYS_COLUMN)}${row}`;
 }
 
 /** Normaliza nombres para comparar sin acentos ni mayúsculas. */

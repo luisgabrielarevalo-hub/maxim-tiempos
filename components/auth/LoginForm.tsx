@@ -9,6 +9,7 @@ import {
   type LoginErrors,
   type LoginField,
 } from "@/lib/auth";
+import { isNextFlowError } from "@/lib/next-errors";
 
 interface LoginFormProps {
   nextPath: string;
@@ -102,9 +103,14 @@ export default function LoginForm({
         setNotice({ variant: "mal", message: result.message });
         if (result.errors) focusFirstError(result.errors);
       }
-    } catch {
+
+      setIsLoading(false);
+    } catch (error) {
+      // El redirect del servidor rechaza con un error interno de Next aunque
+      // la navegación ya esté en curso; no se muestra como fallo.
+      if (isNextFlowError(error)) return;
+
       setNotice({ variant: "mal", message: GENERIC_ERROR });
-    } finally {
       setIsLoading(false);
     }
   }
