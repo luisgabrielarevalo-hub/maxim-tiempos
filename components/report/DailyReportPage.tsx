@@ -227,7 +227,10 @@ function ReportWorkspace({
   async function refreshRestDays() {
     try {
       const result = await loadRestDaysAction();
-      setRestDays(result.restDays);
+
+      // Un fallo de lectura devuelve `message`; se conserva el último valor
+      // conocido y un vacío real de la hoja (`message: null`) sigue mostrando `—`.
+      if (!result.message) setRestDays(result.restDays);
     } catch {
       // Conserva el último valor conocido; el guardado ya se confirmó.
     }

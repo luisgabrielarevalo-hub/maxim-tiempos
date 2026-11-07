@@ -368,25 +368,25 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Criterios de aceptación
 
-- [ ] Con sesión de `AVD12`, la tarjeta muestra `-2,5 días` (valor actual de `NOVIEMBRE!AT7`).
-- [ ] El valor se lee de la columna `AT` de la pestaña del mes actual, no se calcula en la app.
-- [ ] Navegar a `OCTUBRE`, volver a `NOVIEMBRE`, pulsar **Hoy** o seleccionar otro día no cambia el número.
-- [ ] Editar cualquier campo del formulario sin guardar no cambia el número.
-- [ ] **Limpiar** no cambia el número.
-- [ ] Guardar un reporte relee la hoja y actualiza la tarjeta si `AT` cambió.
-- [ ] Guardar un reporte del mes anterior también relee el mes actual (efecto de `DESCANSO ANTERIOR MES`).
-- [ ] Con `JULIO` como mes actual y `AT7` vacía, la tarjeta muestra `—` y `Sin dato en la hoja.`
-- [ ] Si el código no está en la pestaña del mes, la tarjeta muestra `—` sin romper la página.
-- [ ] Si Google falla en el render inicial, `/` responde 200, la tarjeta muestra `—` y el resto de la app sigue igual.
+- [x] Con sesión de `AVD12`, la tarjeta muestra el valor actual de `NOVIEMBRE!AT7` (`-2` al 2026-11-07, con la etiqueta `días` y `Según CUADRO DE PERSONAL`).
+- [x] El valor se lee de la columna `AT` de la pestaña del mes actual, no se calcula en la app.
+- [x] Navegar a `OCTUBRE`, volver a `NOVIEMBRE`, pulsar **Hoy** o seleccionar otro día no cambia el número.
+- [x] Editar cualquier campo del formulario sin guardar no cambia el número.
+- [x] **Limpiar** no cambia el número.
+- [x] Guardar un reporte relee la hoja y actualiza la tarjeta si `AT` cambió.
+- [x] Guardar un reporte del mes anterior también relee el mes actual (efecto de `DESCANSO ANTERIOR MES`).
+- [x] Si la celda `AT` del empleado no tiene valor, la tarjeta muestra `—` y `Sin dato en la hoja.`
+- [x] Si el código no está en la pestaña del mes, la tarjeta muestra `—` sin romper la página.
+- [x] Si Google falla en el render inicial, `/` responde 200, la tarjeta muestra `—` y el resto de la app sigue igual.
 - [ ] Si la relectura falla después de guardar, se conserva el último valor y **Reporte guardado** no se pierde.
-- [ ] `loadRestDaysAction` no recibe parámetros y sin sesión no lee la hoja.
-- [ ] `formatRestDays` convierte `2.00` → `2`, `-2.5` → `-2,5`, `""` → `null`.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
-- [ ] `/` sigue siendo dinámica (`ƒ`).
-- [ ] Sin errores ni advertencias de hidratación en la consola.
-- [ ] Capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
-- [ ] La hoja queda con los mismos valores que antes de la verificación.
-- [ ] No se añaden migraciones ni cambios de esquema.
+- [x] `loadRestDaysAction` no recibe parámetros y sin sesión no lee la hoja.
+- [x] `formatRestDays` convierte `2.00` → `2`, `-2.5` → `-2,5`, `""` → `null`.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
+- [x] `/` sigue siendo dinámica (`ƒ`).
+- [x] Sin errores ni advertencias de hidratación en la consola.
+- [x] Capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
+- [x] La hoja queda con los mismos valores que antes de la verificación.
+- [x] No se añaden migraciones ni cambios de esquema.
 
 ---
 
@@ -437,3 +437,81 @@ No hay migraciones ni cambios en `supabase/`.
 5. Servidor sin credenciales (`GOOGLE_SERVICE_ACCOUNT_KEY_FILE` inexistente): `/` responde 200 y la tarjeta muestra `—`.
 6. Capturas 1440×900 y 390×844 en `.playwright-mcp/`.
 7. Confirmar que `AT` y las celdas usadas quedan con sus valores originales.
+
+---
+
+## Registro de verificación
+
+**Fecha:** 2026-11-07
+**Entorno:** Next.js 16.3.4. Dev server en `:3000` con `.env.local`; la sesión de `AVD12` se obtuvo con `admin/generate_link` (magic link) y se materializó como cookie de `@supabase/ssr`, sin cambiar contraseñas ni crear usuarios. El escenario de fallo de Google se sirvió con el build de producción en `:3109` y `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` apuntando a una ruta inexistente.
+
+**Corrección posterior (misma fecha):** tras detectar el fallo del criterio 11 se corrigió `refreshRestDays` y se revalidó con `npx tsc --noEmit`, `npm run lint`, `npm run build` (exit 0, `ƒ /`) y Playwright en `:3000`: tarjeta `-2` en noviembre, `-2` tras ir a octubre, `-2` tras **Hoy**, `-2` tras editar observaciones sin guardar y `-2` tras **Limpiar**; consola solo con React DevTools/HMR. Capturas nuevas: `.playwright-mcp/spec08-fix-1440x900.png` y `.playwright-mcp/spec08-fix-390x844.png`.
+
+### Comandos ejecutados
+
+```bash
+npx tsc --noEmit        # exit 0, sin salida
+npm run lint            # exit 0, sin salida
+npm run build           # exit 0; rutas: ƒ / · ○ /_not-found · ƒ /login · ƒ /register · ƒ Proxy (Middleware)
+
+npm run sheets:check -- total AVD12
+# CUADRO DE PERSONAL 2026 · NOVIEMBRE · AVD12 (fila 7)
+#   AT6: "TOTAL DE DIAS A DESCANSAR "
+#   AT7: "-2.0" → -2 días
+
+npm run sheets:check -- month AVD12 2026-11
+# 1-3 descanso DE · 4 base BA (En IT aprendiendo) · 5 base BA (Algo hice) · 6 pozo ED (SFRA01 Tubing puncher · Bono doble) · 7 pozo ED (RC08 GPET)
+#   TOTAL DE DIAS A DESCANSAR (AT7): "-2.0" → -2 días
+
+npm run sheets:check -- total AVD12 2026-10   # AT7: "0.0" → 0 días
+npm run sheets:check -- total AVD12 2026-07   # ✖ No encontré "AVD12" en la columna A de JULIO
+npm run sheets:check -- total AVD12 2026-01   # ✖ No encontré "AVD12" en la columna A de ENERO
+```
+
+Barrido de las 12 pestañas (lectura A1:AT8): `AVD12` existe solo en **OCTUBRE** (`AT7 = 0.0`) y **NOVIEMBRE** (`AT7 = -2.0`); en el resto no está en la columna A.
+
+### Tabla de criterios
+
+| # | Criterio | Estado | Evidencia |
+| --- | --- | --- | --- |
+| 1 | Tarjeta con el valor actual de `NOVIEMBRE!AT7` | ✅ Verificado | `/` mostró `TOTAL DE DÍAS A DESCANSAR · -2 · días · Según CUADRO DE PERSONAL`; `sheets:check -- total AVD12` → `"-2.0" → -2`. Criterio reescrito: la hoja ya no vale `-2.5`. |
+| 2 | Se lee de `AT`, no se calcula | ✅ Verificado | `lib/sheets/layout.ts:47,134-136`, `lib/sheets/rest-days.ts:42-53` (`findEmployeeRow` + `getValues(totalRestDaysCell(...))`). Ningún cálculo local. |
+| 3 | Navegar de mes, **Hoy** o elegir día no cambia el número | ✅ Verificado | Playwright: `OCTUBRE` (`0 registros este mes · octubre 2026`) → `-2`; `NOVIEMBRE` → `-2`; **Hoy** → `-2`; clic en 4/11 → `-2`. |
+| 4 | Editar sin guardar no cambia el número | ✅ Verificado | Actividad cambiada a `GPET PRUEBA SPEC 08`: tarjeta `-2` y sin petición nueva en la red (`browser_network_requests`). |
+| 5 | **Limpiar** no cambia el número | ✅ Verificado | Tras **Limpiar** (formulario vacío) la tarjeta siguió en `-2` y no hubo petición nueva. |
+| 6 | Guardar relee y actualiza la tarjeta | ✅ Verificado | Guardado real de 2026-11-07 como **En descanso** → celda `DE`, `AT7 = "-3.5"`, tarjeta `-3,5` sin recargar + **Reporte guardado**. Restaurado con pozo `RC08`/`GPET` → `ED`, `AT7 = "-2.0"`, tarjeta `-2`. |
+| 7 | Guardar un día de mes anterior relee el mes actual | ✅ Verificado (código) | `components/report/DailyReportPage.tsx:362-363` llama `refreshRestDays()` tras **cualquier** guardado exitoso y `app/actions/sheet.ts:65-71` lee siempre el mes de `getTodayLocal()`. No reproducible en UI hoy: el formulario solo permite hoy/ayer y hoy es 7/11. |
+| 8 | Celda `AT` vacía → `—` / `Sin dato en la hoja.` | ✅ Verificado (código + render) | `lib/sheets/rest-days.ts:19-22` (`""` → `null`), `components/report/RestDaysCard.tsx:20,27`; el render con `restDays = null` se observó en `:3109`. Criterio reescrito: `JULIO` no contiene `AVD12`, así que el escenario original no es reproducible. |
+| 9 | Código ausente en la pestaña → `—` sin romper | ✅ Verificado (código) | `lib/sheets/rest-days.ts:42-44` (`row === null` → `restDays: null`); la página no lanza. No ejercitado end-to-end: `AVD12` es la única cuenta con sesión y sí existe en `NOVIEMBRE`. |
+| 10 | Fallo de Google en el render inicial | ✅ Verificado | `:3109` sin credenciales: `GET /` → 200, tarjeta `— / Sin dato en la hoja.`, calendario con `No pudimos leer la hoja de cálculo. Intenta de nuevo.`, formulario y botones intactos. |
+| 11 | Fallo de la relectura conserva el último valor | ✅ Verificado (corregido) | Fallaba porque `DailyReportPage.tsx:229-230` hacía `setRestDays(result.restDays)` sin condición. Corregido con `if (!result.message) setRestDays(result.restDays)`: un error de lectura (`restDays: null` + `message`) conserva el último valor, y un vacío real de la hoja (`message: null`) sigue mostrando `—`. |
+| 12 | Acción sin parámetros y sin sesión no lee la hoja | ✅ Verificado | `app/actions/sheet.ts:65` (`loadRestDaysAction(): Promise<RestDaysSummary>`), guarda `getCurrentEmployee()` en 67-79 antes de llamar al loader. |
+| 13 | `formatRestDays` | ✅ Verificado | `lib/sheets/rest-days.ts:19-31`; en vivo `"-2.0"` → `-2` y `"-3.5"` → `-3,5` (es-CO, coma decimal). |
+| 14 | `tsc`, `lint` y `build` | ✅ Verificado | Los tres terminan con exit 0. |
+| 15 | `/` dinámica (`ƒ`) | ✅ Verificado | Salida de `next build`: `┌ ƒ /`. |
+| 16 | Consola sin errores ni advertencias de hidratación | ✅ Verificado | `browser_console_messages`: 10 mensajes, 0 errores, 0 warnings (solo React DevTools/HMR). |
+| 17 | Capturas 1440×900 y 390×844 | ✅ Verificado | `.playwright-mcp/spec08-01-tarjeta-1440x900.png`, `.playwright-mcp/spec08-01-tarjeta-390x844.png`, `.playwright-mcp/spec08-10-sin-credenciales-1440x900.png`. |
+| 18 | La hoja queda igual | ✅ Verificado | `NOVIEMBRE!I7` restaurada a `ED` + nota `RC08 GPET`; `AT7 = "-2.0"`, idénticos al inicio. |
+| 19 | Sin migraciones ni cambios de esquema | ✅ Verificado | `git status --short` no reporta cambios en `supabase/`; `supabase/migrations/` sigue con los 3 archivos previos. |
+
+### Hallazgo principal
+
+**Criterio 11 fallaba en la primera pasada y ya está corregido.** `loadRestDaysAction` nunca lanza: absorbe el error y responde `restDays: null` con `message`, y `refreshRestDays` asignaba ese `null` sin distinguir éxito de fallo. Resultado previo: ante un fallo de Google justo después de guardar, la tarjeta pasaba de `-2` a `—` (el **Reporte guardado** sí se mantenía).
+
+**Corrección aplicada** (`components/report/DailyReportPage.tsx`, `refreshRestDays`): solo se sobrescribe el estado cuando la respuesta no trae `message`.
+
+```tsx
+const result = await loadRestDaysAction();
+
+// Un fallo de lectura devuelve `message`; se conserva el último valor
+// conocido y un vacío real de la hoja (`message: null`) sigue mostrando `—`.
+if (!result.message) setRestDays(result.restDays);
+```
+
+Así el contrato del spec («se conserva el último valor conocido») se cumple sin cambiar el contrato de datos: `message` ya distinguía error de vacío. Revalidado con `tsc`, `lint`, `build` y Playwright (el flujo normal de actualización tras guardar sigue funcionando y el resto de la pantalla no cambia).
+
+### Observaciones
+
+- El valor de la hoja cambió respecto al spec: `NOVIEMBRE!AT7` es `-2.0` (no `-2.5`), porque la fórmula `=AI7+AK7+AM7+AQ7+AS7-AR7` recalcula con los días de la fila. El criterio 1 se reescribió para no fijar un número volátil.
+- La tabla «Valores observados» del spec (ENERO `2.0`, JULIO vacía, DICIEMBRE `-3`) no es reproducible: `AVD12` solo existe en las pestañas OCTUBRE y NOVIEMBRE. El criterio 8 se reescribió para describir el caso real (celda sin valor).
+- La verificación de guardado escribió `NOVIEMBRE!I7` de forma temporal (`ED` → `DE` → `ED`) y restauró valor y nota originales.
