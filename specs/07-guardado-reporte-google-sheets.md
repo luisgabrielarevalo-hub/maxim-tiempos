@@ -1,6 +1,6 @@
 # SPEC 07 — Guardado del reporte en Google Sheets
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (reporte diario), SPEC 06 (carga del mes desde Google Sheets)
 > **Reemplaza:** la decisión del SPEC 06 de mantener la app en solo lectura y la persistencia de sesión del SPEC 01.
 > **Fecha:** 2026-11-06
@@ -1001,34 +1001,34 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Criterios de aceptación
 
-- [ ] El input de fecha tiene `min=ayer` y `max=hoy`, derivados de `serverToday` (fecha del servidor).
-- [ ] `validateReport` rechaza fechas anteriores a ayer con `Solo puedes reportar el día de hoy o el de ayer.`
-- [ ] `saveDayReportAction` rechaza fechas fuera de hoy/ayer según `getTodayLocal()` del servidor y no recibe `today` del cliente.
-- [ ] `app/page.tsx` pasa `serverToday` y el cliente no calcula el rango con la fecha del navegador.
-- [ ] Al entrar a `/`, el formulario carga el estado, pozo, actividad y observaciones de hoy si la celda tiene datos.
-- [ ] Al cambiar a ayer, carga los datos de ayer.
-- [ ] Un día sin datos deja el formulario vacío con la fecha seleccionada.
-- [ ] Guardar un día de base escribe `BA` (o conserva `BA`) y las observaciones en la nota.
-- [ ] Guardar un día de pozo escribe el código, el pozo, la actividad y las observaciones; al recargar, los tres campos se recuperan.
-- [ ] Guardar un pozo sin patrón de nombre + número deja la nota en observaciones y el campo pozo pendiente al recargar.
-- [ ] Un código existente que traduce al mismo estado se conserva; si cambia el estado, se escribe el canónico.
-- [ ] Un día con `FE` se carga sin estado y, al guardar, `FE` se reemplaza por el canónico.
-- [ ] El histórico muestra pozo y actividad de notas existentes como `SFRA099 ILT`.
-- [ ] El calendario y el histórico reflejan el reporte guardado.
-- [ ] Aparece **Reporte guardado**; editar cualquier campo la oculta.
-- [ ] El botón dice **Guardar reporte** y **Guardando…** mientras guarda.
-- [ ] El formulario está deshabilitado mientras carga el día.
-- [ ] Si la carga del día falla, se muestra el aviso y **Guardar reporte** queda bloqueado.
-- [ ] El calendario lateral sigue navegando meses y no cambia la fecha del formulario.
-- [ ] La acción no acepta identidad del cliente.
-- [ ] Sin sesión no se escribe nada.
-- [ ] Un error de Google devuelve un mensaje genérico, sin 500.
-- [ ] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
-- [ ] `/` sigue siendo dinámica (`ƒ`).
-- [ ] Sin errores ni advertencias de hidratación en la consola.
-- [ ] Capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
-- [ ] La hoja queda con los mismos valores que antes de la verificación.
-- [ ] No se añaden migraciones ni cambios de esquema.
+- [x] El input de fecha tiene `min=ayer` y `max=hoy`, derivados de `serverToday` (fecha del servidor).
+- [x] `validateReport` rechaza fechas anteriores a ayer con `Solo puedes reportar el día de hoy o el de ayer.`
+- [x] `saveDayReportAction` rechaza fechas fuera de hoy/ayer según `getTodayLocal()` del servidor y no recibe `today` del cliente.
+- [x] `app/page.tsx` pasa `serverToday` y el cliente no calcula el rango con la fecha del navegador.
+- [x] Al entrar a `/`, el formulario carga el estado, pozo, actividad y observaciones de hoy si la celda tiene datos.
+- [x] Al cambiar a ayer, carga los datos de ayer.
+- [x] Un día sin datos deja el formulario vacío con la fecha seleccionada.
+- [x] Guardar un día de base escribe `BA` (o conserva `BA`) y las observaciones en la nota.
+- [x] Guardar un día de pozo escribe el código, el pozo, la actividad y las observaciones; al recargar, los tres campos se recuperan.
+- [x] Guardar un pozo sin patrón de nombre + número deja la nota en observaciones y el campo pozo pendiente al recargar.
+- [x] Un código existente que traduce al mismo estado se conserva; si cambia el estado, se escribe el canónico.
+- [x] Un día con `FE` se carga sin estado y, al guardar, `FE` se reemplaza por el canónico.
+- [x] El histórico muestra pozo y actividad de notas existentes como `SFRA099 ILT`.
+- [x] El calendario y el histórico reflejan el reporte guardado.
+- [x] Aparece **Reporte guardado**; editar cualquier campo la oculta.
+- [x] El botón dice **Guardar reporte** y **Guardando…** mientras guarda.
+- [x] El formulario está deshabilitado mientras carga el día.
+- [x] Si la carga del día falla, se muestra el aviso y **Guardar reporte** queda bloqueado.
+- [x] El calendario lateral sigue navegando meses y no cambia la fecha del formulario.
+- [x] La acción no acepta identidad del cliente.
+- [x] Sin sesión no se escribe nada.
+- [x] Un error de Google devuelve un mensaje genérico, sin 500.
+- [x] `npx tsc --noEmit`, `npm run lint` y `npm run build` pasan.
+- [x] `/` sigue siendo dinámica (`ƒ`).
+- [x] Sin errores ni advertencias de hidratación en la consola.
+- [x] Capturas de 1440×900 y 390×844 en `.playwright-mcp/`.
+- [x] La hoja queda con los mismos valores que antes de la verificación.
+- [x] No se añaden migraciones ni cambios de esquema.
 
 ---
 
@@ -1078,6 +1078,90 @@ No hay migraciones ni cambios en `supabase/`.
 
 ## Registro de verificación
 
-**Estado:** pendiente de implementar.
+**Estado:** implementado y verificado end-to-end con la hoja real.
 
-Se completará después de `/spec-impl` con los comandos ejecutados, la tabla de criterios, las capturas y la limpieza de los valores temporales de la hoja.
+**Entorno:** Next.js 16.3.4, servidor de desarrollo en `:3000` con `.env.local` y navegador Playwright. La sesión de `AVD12` se obtuvo con `admin/generate_link` (magic link) y se materializó como cookie de `@supabase/ssr` (`base64-` + JSON de la sesión), sin cambiar contraseñas ni crear usuarios. El escenario de error de Google se levantó con `npx next start -p 3108` y `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` apuntando a una ruta inexistente.
+
+### Comandos ejecutados
+
+```bash
+npx tsc --noEmit                  # OK
+npm run lint                      # OK
+npm run build                     # OK; rutas: ƒ / · ○ /_not-found · ƒ /login · ƒ /register · ƒ Proxy
+
+npm run sheets:check -- read AVD12 2026-11-06
+# AVD12 — 2026-11-06 — NOVIEMBRE!H7
+#   código actual: "ED"
+#   nota actual: "SFRA100 TRZ"
+
+npm run sheets:check -- read AVD12 2026-11-05
+# AVD12 — 2026-11-05 — NOVIEMBRE!G7
+#   código actual: "ED"
+#   nota actual: "SFRA099 ILT"
+
+npm run sheets:check -- write AVD12 2026-11-05 FE --note "Nota FE" --yes
+npm run sheets:check -- write AVD12 2026-11-05 ED --note "SFRA099 ILT" --yes   # restauración
+```
+
+### Pruebas de interfaz
+
+- **Carga inicial:** `/` abre con `2026-11-06`, `En pozo`, `SFRA100`, `TRZ` y la etiqueta `Editando reporte existente · ED`.
+- **Cambio de fecha:** al pasar a `2026-11-05` carga `SFRA099` / `ILT`.
+- **Guardado de pozo:** se cambió la actividad a `ILT PRUEBA SPEC 07` y las observaciones a `Prueba temporal SPEC 07`; la celda quedó `ED` + `SFRA099 ILT PRUEBA SPEC 07 · Prueba temporal SPEC 07` y la interfaz mostró **Reporte guardado** e histórico actualizado.
+- **Guardado de base:** la celda quedó `BA` + `En IT aprendiendo`; la etiqueta pasó a `Editando reporte existente · BA`.
+- **FE:** con la celda en `FE` y nota `Nota FE`, el formulario cargó sin estado, con el código `FE` en la etiqueta y la nota en observaciones; al guardar base se escribió `BA`.
+- **Celda vacía:** el formulario quedó vacío con la fecha `2026-11-05`, sin etiqueta ni aviso.
+- **Pozo sin patrón:** `SINPATRON ninguna` se guardó y al recargar el estado fue `pozo` con pozo y actividad vacíos y la nota completa en observaciones.
+- **Validación de rango en cliente:** `2026-11-04` mostró `Solo puedes reportar el día de hoy o el de ayer.` y no escribió.
+- **Validación de rango en servidor:** POST directo a `saveDayReportAction` con `2026-11-04` devolvió `errors.date` con el mismo mensaje y `200`, sin escribir.
+- **Sin sesión:** POST directo sin cookies devolvió `No encontramos tu ficha de empleado.` y no escribió.
+- **Botones:** se observó **Guardando…** durante el guardado y **Guardar reporte** después; la confirmación desapareció al editar cualquier campo.
+- **Carga del día:** el formulario permaneció deshabilitado ~1,08 s hasta que respondió la acción; después se habilitó con los datos.
+- **Calendario lateral:** el clic en `4 de noviembre` cambió el histórico a ese día y la fecha del formulario siguió en `2026-11-05`.
+- **Error de Google:** el servidor `:3108` sin credenciales respondió la página con `No pudimos leer la hoja de cálculo. Intenta de nuevo.` y **Guardar reporte** deshabilitado, sin 500.
+- **Consola:** 0 errores, 0 warnings, sin avisos de hidratación.
+
+### Tabla de criterios
+
+| Criterio | Estado | Evidencia |
+| --- | --- | --- |
+| `min=ayer` y `max=hoy` derivados de `serverToday` | ✅ Verificado | `min="2026-11-05"`, `max="2026-11-06"` leídos del input. |
+| `validateReport` rechaza fechas anteriores a ayer | ✅ Verificado | `2026-11-04` mostró `Solo puedes reportar el día de hoy o el de ayer.` |
+| `saveDayReportAction` valida con `getTodayLocal()` y no recibe `today` | ✅ Verificado | POST directo con `2026-11-04` → `errors.date`; la firma no incluye `today`. |
+| `app/page.tsx` pasa `serverToday` y el cliente no calcula el rango | ✅ Verificado | `useTodayLocal`, `useSyncExternalStore` y `WorkspaceSkeleton` eliminados; `today` llega como prop. |
+| Carga de hoy al entrar | ✅ Verificado | `2026-11-06` → `ED`, `SFRA100`, `TRZ`. |
+| Carga de ayer al cambiar la fecha | ✅ Verificado | `2026-11-05` → `SFRA099`, `ILT`. |
+| Día sin datos deja el formulario vacío | ✅ Verificado | Celda limpiada; formulario vacío con la fecha elegida. |
+| Guardar base escribe `BA` y las observaciones | ✅ Verificado | `BA` + `En IT aprendiendo`. |
+| Guardar pozo escribe código, pozo, actividad y observaciones | ✅ Verificado | `ED` + `SFRA099 ILT PRUEBA SPEC 07 · Prueba temporal SPEC 07`; recarga correcta. |
+| Pozo sin patrón deja la nota en observaciones | ✅ Verificado | `SINPATRON ninguna` → pozo y actividad vacíos al recargar. |
+| Código existente del mismo estado se conserva; cambio usa canónico | ✅ Verificado | `ED` se conservó al guardar pozo; `BA` se escribió al cambiar de estado. |
+| `FE` se carga sin estado y se reemplaza al guardar | ✅ Verificado | Etiqueta `FE`, estado vacío; guardado base → `BA`. |
+| Histórico muestra pozo y actividad de notas existentes | ✅ Verificado | `Pozo: SFRA100` / `Actividad realizada: TRZ` y `SFRA099` / `ILT`. |
+| Calendario e histórico reflejan el guardado | ✅ Verificado | Tras guardar, el histórico y la cabecera del mes se actualizaron. |
+| Aparece **Reporte guardado** y se oculta al editar | ✅ Verificado | Playwright: visible tras guardar, ausente tras editar. |
+| Botón **Guardar reporte** / **Guardando…** | ✅ Verificado | Textos observados durante y después del guardado. |
+| Formulario deshabilitado mientras carga | ✅ Verificado | Campos `disabled` durante ~1,08 s. |
+| Carga fallida muestra aviso y bloquea guardar | ✅ Verificado | Servidor `:3108` sin credenciales. |
+| Calendario navega meses y no cambia la fecha del formulario | ✅ Verificado | Clic en `4/11`; fecha del formulario intacta. |
+| La acción no acepta identidad del cliente | ✅ Verificado | Entrada solo con `date`, `status`, `well`, `activity`, `notes`; identidad desde `getCurrentEmployee()`. |
+| Sin sesión no se escribe | ✅ Verificado | POST sin cookies → `No encontramos tu ficha de empleado.` |
+| Error de Google devuelve mensaje genérico, sin 500 | ✅ Verificado | `:3108` respondió 200 con `No pudimos leer la hoja de cálculo. Intenta de nuevo.` |
+| `tsc`, `lint` y `build` | ✅ Verificado | Los tres terminan sin errores. |
+| `/` sigue siendo dinámica (`ƒ`) | ✅ Verificado | Salida de `next build`. |
+| Consola sin errores ni warnings | ✅ Verificado | 0 mensajes de error y 0 de advertencia. |
+| Capturas 1440×900 y 390×844 | ✅ Verificado | `.playwright-mcp/spec-07-desktop-1440x900.png`, `.playwright-mcp/spec-07-mobile-390x844.png`. |
+| La hoja queda con los mismos valores | ✅ Verificado | `2026-11-05` → `ED` / `SFRA099 ILT`; `2026-11-06` → `ED` / `SFRA100 TRZ`. |
+| Sin migraciones ni cambios de esquema | ✅ Verificado | `supabase/` sin cambios en `git status`. |
+
+### Limpieza de datos temporales
+
+- Valores originales restaurados: `NOVIEMBRE!G7` (`ED`, `SFRA099 ILT`) y `NOVIEMBRE!H7` (`ED`, `SFRA100 TRZ`).
+- No se creó ningún usuario de prueba: la sesión se obtuvo con `admin/generate_link` para el usuario existente de `AVD12`, sin cambiar su contraseña.
+- Servidores de verificación `:3108` y el servidor auxiliar de cookies `:4321` detenidos; scripts temporales eliminados.
+
+### Observaciones
+
+- El falso positivo de `CURSO 2024` queda documentado como heurística conocida del patrón de pozo.
+- La cuenta de servicio necesita permiso **Editor**; con **Viewer** el guardado falla con el mensaje genérico.
+- No hay suite de pruebas automatizada; la verificación fue manual con Playwright.
