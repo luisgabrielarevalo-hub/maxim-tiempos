@@ -16,9 +16,15 @@ interface StatusSelectorProps {
   value: DayStatus | "";
   onChange: (status: DayStatus) => void;
   describedBy?: string;
+  disabled?: boolean;
 }
 
-export default function StatusSelector({ value, onChange, describedBy }: StatusSelectorProps) {
+export default function StatusSelector({
+  value,
+  onChange,
+  describedBy,
+  disabled = false,
+}: StatusSelectorProps) {
   return (
     <div
       role="radiogroup"
@@ -33,7 +39,9 @@ export default function StatusSelector({ value, onChange, describedBy }: StatusS
         return (
           <label
             key={status}
-            className={`relative flex cursor-pointer items-start gap-3 rounded-md border p-4 transition-colors ${
+            className={`relative flex items-start gap-3 rounded-md border p-4 transition-colors ${
+              disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+            } ${
               active
                 ? `border-current ring-[3px] ${ACTIVE_STYLES[status]}`
                 : "border-input hover:border-foreground/35 hover:bg-muted/40 has-[:focus]:ring-[3px] has-[:focus]:ring-ring/40"
@@ -44,6 +52,7 @@ export default function StatusSelector({ value, onChange, describedBy }: StatusS
               name="status"
               value={status}
               checked={active}
+              disabled={disabled}
               onChange={() => onChange(status)}
               className="sr-only"
             />
