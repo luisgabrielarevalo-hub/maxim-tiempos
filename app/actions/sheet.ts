@@ -3,6 +3,10 @@
 import { getCurrentEmployee } from "@/lib/supabase/session";
 import { loadEmployeeMonth, type MonthReports } from "@/lib/sheets/month";
 import {
+  loadEmployeeRestDays,
+  type RestDaysSummary,
+} from "@/lib/sheets/rest-days";
+import {
   loadEmployeeDay,
   saveEmployeeDay,
   type DayReportResult,
@@ -12,6 +16,7 @@ import {
   getTodayLocal,
   isAllowedReportDate,
   monthKey,
+  parseLocalDate,
   validateReport,
   type DayStatus,
   type ReportErrors,
@@ -54,6 +59,31 @@ export async function loadMonthReportsAction(
   }
 
   return loadEmployeeMonth(employee.employeeCode, year, monthIndex);
+}
+
+/** Lee el total de días a descansar del mes actual. Solo lectura, sin parámetros. */
+export async function loadRestDaysAction(): Promise<RestDaysSummary> {
+  try {
+    const employee = await getCurrentEmployee();
+
+    if (employee) {
+      return loadEmployeeRestDays(employee.employeeCode);
+    }
+
+    const now = parseLocalDate(getTodayLocal());
+
+    return {
+      month: monthKey(now.getFullYear(), now.getMonth()),
+      restDays: null,
+      message: NO_EMPLOYEE,
+    };
+  } catch {
+    return {
+      month: "",
+      restDays: null,
+      message: "No pudimos leer la hoja de cálculo. Intenta de nuevo.",
+    };
+  }
 }
 
 /** Lee el día seleccionado del empleado autenticado. Solo lectura. */

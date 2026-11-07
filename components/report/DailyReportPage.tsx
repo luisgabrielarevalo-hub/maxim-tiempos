@@ -19,6 +19,7 @@ import {
 import {
   loadDayReportAction,
   loadMonthReportsAction,
+  loadRestDaysAction,
   saveDayReportAction,
 } from "@/app/actions/sheet";
 import LogoutButton from "@/components/auth/LogoutButton";
@@ -26,6 +27,7 @@ import { CalendarIcon } from "./icons";
 import ReportCalendar from "./ReportCalendar";
 import ReportForm from "./ReportForm";
 import ReportHistory from "./ReportHistory";
+import RestDaysCard from "./RestDaysCard";
 
 const EMPTY_VALUES: ReportFormValues = {
   date: "",
@@ -41,6 +43,7 @@ interface DailyReportPageProps {
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
+  initialRestDays: string | null;
 }
 
 export default function DailyReportPage({
@@ -49,6 +52,7 @@ export default function DailyReportPage({
   initialMonth,
   initialReports,
   initialMessage,
+  initialRestDays,
 }: DailyReportPageProps) {
   return (
     <>
@@ -94,6 +98,7 @@ export default function DailyReportPage({
         initialMonth={initialMonth}
         initialReports={initialReports}
         initialMessage={initialMessage}
+        initialRestDays={initialRestDays}
       />
     </>
   );
@@ -104,6 +109,7 @@ interface ReportWorkspaceProps {
   initialMonth: { year: number; monthIndex: number };
   initialReports: DailyReport[];
   initialMessage: string | null;
+  initialRestDays: string | null;
 }
 
 function ReportWorkspace({
@@ -111,6 +117,7 @@ function ReportWorkspace({
   initialMonth,
   initialReports,
   initialMessage,
+  initialRestDays,
 }: ReportWorkspaceProps) {
   const todayDate = parseLocalDate(today);
   const yesterday = previousLocalDate(today);
@@ -118,6 +125,7 @@ function ReportWorkspace({
   const [errors, setErrors] = useState<ReportErrors>({});
   const [sheetReports, setSheetReports] = useState<DailyReport[]>(initialReports);
   const reports = sheetReports;
+  const [restDays, setRestDays] = useState<string | null>(initialRestDays);
   const [selectedDate, setSelectedDate] = useState(() => {
     const isTodayInInitialMonth =
       todayDate.getFullYear() === initialMonth.year &&
@@ -213,6 +221,15 @@ function ReportWorkspace({
       });
     } finally {
       if (requestId === requestIdRef.current) setIsLoadingMonth(false);
+    }
+  }
+
+  async function refreshRestDays() {
+    try {
+      const result = await loadRestDaysAction();
+      setRestDays(result.restDays);
+    } catch {
+      // Conserva el último valor conocido; el guardado ya se confirmó.
     }
   }
 
@@ -343,6 +360,7 @@ function ReportWorkspace({
       setDayLoadFailed(false);
       setVisibleMonth(savedMonth);
       void requestMonth(savedMonth);
+      void refreshRestDays();
 
       return {};
     } catch {
@@ -422,6 +440,7 @@ function ReportWorkspace({
         </header>
 
         <div className="pt-5">
+          <RestDaysCard restDays={restDays} />
           <ReportCalendar
             reports={reports}
             selectedDate={selectedDate}

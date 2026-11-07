@@ -50,15 +50,17 @@ npm run sheets:check -- employees 2026-11-05          # empleados del mes
 npm run sheets:check -- read "LUIS AREVALO" 2026-11-05
 npm run sheets:check -- write "LUIS AREVALO" 2026-11-05 DE --yes
 npm run sheets:check -- write AVD12 2026-11-06 ED --note "SFRA100 TRZ · Cambio de sarta" --yes
-npm run sheets:check -- month AVD12 2026-11           # días traducidos + notas
+npm run sheets:check -- month AVD12 2026-11           # días traducidos + notas + total
+npm run sheets:check -- total AVD12 [YYYY-MM]         # TOTAL DE DIAS A DESCANSAR (AT)
 ```
 
 `month` acepta cualquier identificador de la columna A (código de 5 caracteres u
-ObjectId), imprime una línea por día con el estado traducido y añade la nota de la
-casilla cuando existe. `read` imprime el código y la nota actuales. `write` exige
-`--yes` y escribe valor y nota con el mismo `batchUpdate`/`updateCells` que usa la
-app; `--note` es opcional y por defecto deja la nota vacía. Es solo diagnóstico: la
-app no lo usa.
+ObjectId), imprime una línea por día con el estado traducido, añade la nota de la
+casilla cuando existe y termina con el **TOTAL DE DIAS A DESCANSAR** (`AT`). `total`
+imprime el encabezado `AT6` y el valor de `AT` de la fila (mes actual por defecto).
+`read` imprime el código y la nota actuales. `write` exige `--yes` y escribe valor y
+nota con el mismo `batchUpdate`/`updateCells` que usa la app; `--note` es opcional y
+por defecto deja la nota vacía. Es solo diagnóstico: la app no lo usa.
 
 ### Estructura de la hoja
 
@@ -87,7 +89,15 @@ app no lo usa.
 - No hay confirmación de sobrescritura, historial de cambios ni control de concurrencia: gana la última escritura.
 - La cuenta de servicio necesita permiso **Editor** para guardar.
 
-Código: `lib/sheets/client.ts` (auth + API + escritura de celda), `lib/sheets/layout.ts` (pestañas, columnas, empleados), `lib/sheets/day.ts` (carga y guardado de un día), `lib/sheets/month.ts` (carga del mes), `app/actions/sheet.ts` (Server Actions) y `lib/report.ts` (tipos, traducción, parser de notas y fechas).
+Código: `lib/sheets/client.ts` (auth + API + escritura de celda), `lib/sheets/layout.ts` (pestañas, columnas, empleados), `lib/sheets/day.ts` (carga y guardado de un día), `lib/sheets/month.ts` (carga del mes), `lib/sheets/rest-days.ts` (total de días a descansar), `app/actions/sheet.ts` (Server Actions) y `lib/report.ts` (tipos, traducción, parser de notas y fechas).
+
+### Total de días a descansar
+
+- La tarjeta **TOTAL DE DÍAS A DESCANSAR** de la barra lateral muestra el valor de la columna `AT` de la fila del empleado en la pestaña del **mes calendario actual del servidor** (`getTodayLocal()`). No se calcula en la app: se copia de la hoja, que lo obtiene con su propia fórmula.
+- Se lee con `getValues` (valor formateado por Google), se parsea con `Number()` y se formatea con `Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 })`: `-2.5` → `-2,5`, `2.00` → `2`, `21.0` → `21`. Un texto no numérico se muestra tal cual; una celda vacía muestra `—` y `Sin dato en la hoja.`.
+- El valor **no** depende del mes visible: navegar de mes, pulsar **Hoy**, cambiar de día o editar el formulario no lo mueven. Solo se relee en el render inicial de `/` y después de un guardado exitoso (`loadRestDaysAction`), porque guardar cualquier día puede cambiar la cadena `DESCANSO ANTERIOR MES` del mes actual.
+- Si falla la lectura inicial, la tarjeta muestra `—` y la página sigue respondiendo 200. Si falla la relectura tras guardar, se conserva el último valor conocido y **Reporte guardado** no se pierde.
+- La Server Action no recibe parámetros: el empleado sale de la sesión y el mes de `getTodayLocal()`. Sin sesión no lee la hoja. No hay caché (`no-store`), polling ni tiempo real.
 
 ## Supabase
 
@@ -134,7 +144,7 @@ Credenciales inválidas muestran siempre "Correo o contraseña incorrectos.", si
 
 ### Alcance
 
-La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). La carga del mes y el guardado del reporte en Google Sheets están implementados (SPEC 06 y SPEC 07): `/` lee el mes del empleado autenticado, carga el día seleccionado, lo guarda en la celda y solo permite hoy o ayer. Persistir los reportes en Supabase sigue pendiente.
+La sesión, el login real, el logout y la protección de rutas están implementados (SPEC 05). La carga del mes y el guardado del reporte en Google Sheets están implementados (SPEC 06 y SPEC 07): `/` lee el mes del empleado autenticado, carga el día seleccionado, lo guarda en la celda y solo permite hoy o ayer. El home muestra el total de días a descansar (`AT` del mes actual, SPEC 08). Persistir los reportes en Supabase sigue pendiente.
 
 ## Learn More
 

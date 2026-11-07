@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import DailyReportPage from "@/components/report/DailyReportPage";
 import { getTodayLocal, monthKey, parseLocalDate } from "@/lib/report";
 import { loadEmployeeMonth } from "@/lib/sheets/month";
+import { loadEmployeeRestDays } from "@/lib/sheets/rest-days";
 import {
   getCurrentEmployee,
   requireSession,
@@ -23,13 +24,22 @@ export default async function Home() {
   const year = todayDate.getFullYear();
   const monthIndex = todayDate.getMonth();
 
-  const initial = employee
-    ? await loadEmployeeMonth(employee.employeeCode, year, monthIndex)
-    : {
-        month: monthKey(year, monthIndex),
-        reports: [],
-        message: "No encontramos tu ficha de empleado.",
-      };
+  const [initial, restDays] = await Promise.all([
+    employee
+      ? loadEmployeeMonth(employee.employeeCode, year, monthIndex)
+      : Promise.resolve({
+          month: monthKey(year, monthIndex),
+          reports: [],
+          message: "No encontramos tu ficha de empleado.",
+        }),
+    employee
+      ? loadEmployeeRestDays(employee.employeeCode, serverToday)
+      : Promise.resolve({
+          month: monthKey(year, monthIndex),
+          restDays: null,
+          message: null,
+        }),
+  ]);
 
   return (
     <DailyReportPage
@@ -38,6 +48,7 @@ export default async function Home() {
       initialMonth={{ year, monthIndex }}
       initialReports={initial.reports}
       initialMessage={initial.message}
+      initialRestDays={restDays.restDays}
     />
   );
 }

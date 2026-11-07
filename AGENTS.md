@@ -10,14 +10,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Proyecto Tiempos Maxim
 
-Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03), which persists accounts in Supabase (SPEC 04). Since SPEC 05 the login is real: the report is a private route, the session lives in cookies and every route except `/login` and `/register` requires a session. Since SPEC 06 the report screen preloads the employee's month from the Google Sheets workbook **CUADRO DE PERSONAL 2026** and reloads it whenever the visible month changes. Since SPEC 07 the form loads the selected day from the sheet, writes the report back and only allows today or yesterday.
+Spanish-language employee time/field-report app ("Bitácora de personal"). The product is defined by the three standalone HTML prototypes in `Referencias/`. The Next.js app implements the daily field report at `/` (SPEC 01), the employee login at `/login` (SPEC 02) and the employee registration at `/register` (SPEC 03), which persists accounts in Supabase (SPEC 04). Since SPEC 05 the login is real: the report is a private route, the session lives in cookies and every route except `/login` and `/register` requires a session. Since SPEC 06 the report screen preloads the employee's month from the Google Sheets workbook **CUADRO DE PERSONAL 2026** and reloads it whenever the visible month changes. Since SPEC 07 the form loads the selected day from the sheet, writes the report back and only allows today or yesterday. Since SPEC 08 the home also shows the employee's **TOTAL DE DIAS A DESCANSAR** (`AT`) for the server's current month, read straight from the sheet and refreshed only after a successful save.
 
 ## Layout
 
 - `app/` — App Router entrypoints (`layout.tsx`, `page.tsx`, `globals.css`, `login/page.tsx`, `register/page.tsx`, `register/actions.ts`, `actions/auth.ts`, `actions/sheet.ts`). `@/*` maps to the repo root; there is no `src/`.
 - `components/` — React components, grouped by domain (`components/auth/` holds the login and registration screens, their forms and the logout button; `components/report/` holds the report form, calendar and history).
 - `lib/` — framework-agnostic domain logic (`lib/auth.ts` holds login and registration validation, the `CurrentEmployee` DTO and `resolveRedirectPath`; `lib/report.ts` holds the report types, status codes, date helpers and the sheet note parser/serializer) and Supabase clients (`lib/supabase/admin.ts`, `server.ts`, `session.ts`, `proxy.ts`, `env.ts`).
-- `lib/sheets/` — Google Sheets integration: `client.ts` (service-account auth, values, grid data and single-cell writes, `no-store`), `layout.ts` (tabs, columns, employee rows), `day.ts` (`loadEmployeeDay` / `saveEmployeeDay`) and `month.ts` (loads one employee's month as `DailyReport[]`).
+- `lib/sheets/` — Google Sheets integration: `client.ts` (service-account auth, values, grid data and single-cell writes, `no-store`), `layout.ts` (tabs, columns, employee rows, `TOTAL_REST_DAYS_COLUMN` / `totalRestDaysCell`), `day.ts` (`loadEmployeeDay` / `saveEmployeeDay`), `month.ts` (loads one employee's month as `DailyReport[]`) and `rest-days.ts` (`loadEmployeeRestDays` / `formatRestDays`).
 - `supabase/` — `config.toml` and versioned SQL migrations. The remote schema is applied from these migrations, not from the dashboard.
 - `proxy.ts` — Next 16 proxy (replaces `middleware.ts`); refreshes the Supabase session on every request and blocks unauthenticated navigation to private routes.
 - `Referencias/` — design/reference prototypes (`login-empleado.html`, `registro-empleado.html`, `reporte-diario-campo.html`). Plain HTML/CSS/JS, not built or imported. Port behavior and styles from here; do not add them to the app as-is.
@@ -33,6 +33,7 @@ Run from the repo root.
 - `npm run build` / `npm start`.
 - `npm run sheets:check -- month <código> YYYY-MM` — diagnostic dump of one employee's month (values, translated status and notes). Needs the service-account key.
 - `npm run sheets:check -- read <código> YYYY-MM-DD` — prints the current code and note of one cell.
+- `npm run sheets:check -- total <código> [YYYY-MM]` — prints `AT6` and the employee's `AT` cell (current month by default), the source of the rest-days card.
 - `npm run sheets:check -- write <código> YYYY-MM-DD <código> [--note "texto"] --yes` — writes value + note with the same `batchUpdate` the app uses. Requires **Editor** permission.
 - No test suite, CI, or formatter is configured. Do not invent test commands.
 
@@ -67,6 +68,7 @@ Run from the repo root.
 - Note format: `pozo` plus activity, then ` · ` plus notes when present (`SFRA100 TRZ · Cambio de sarta`); for the other statuses the note is just the observations. Notes are normalized to a single line.
 - Date window: only the server's today and yesterday are reportable. `app/page.tsx` computes `serverToday` with `getTodayLocal()` and passes it down; `saveDayReportAction` recomputes it and never trusts the client. The deploy timezone must be the operation's (America/Bogota).
 - Form state: `sessionReports` no longer exists. The saved report is reflected by reloading the month of the saved date; there is no overwrite confirmation, no history and no concurrency control.
+- Rest days: `AT` (column `46`, `TOTAL_REST_DAYS_COLUMN`) is **TOTAL DE DIAS A DESCANSAR**, a sheet formula. The app never computes it. `loadEmployeeRestDays` looks up the row in the current server month (`getTodayLocal()`), reads one cell with `getValues` and formats it with `Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 })` (`-2.5` → `-2,5`); empty → `null` (card shows `—`), non-numeric text is shown as-is. `app/page.tsx` loads it in parallel with the month and passes `initialRestDays`; `DailyReportPage` keeps `restDays` in state and calls `loadRestDaysAction()` (no parameters; identity from the session) only after a successful save. The visible month, day changes, editing and **Limpiar** never touch it. Failures are swallowed: initial failure → `null`; post-save failure → keep the last value and the save stays confirmed. No cache, polling or realtime.
 
 ## Domain rules from the prototypes
 
