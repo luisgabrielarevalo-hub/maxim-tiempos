@@ -19,11 +19,11 @@ const SHEET_STATUS_CODES: Record<string, DayStatus> = {
   LI: "licencia",
 };
 
-/** Traduce el código de una casilla. Vacío y FE se omiten. */
+/** Traduce el código de una casilla. Vacío, FE y VA se omiten. */
 export function statusFromSheetCode(raw: string): SheetDayStatus {
   const code = raw.trim().toUpperCase();
 
-  if (!code || code === "FE") return "skip";
+  if (!code || code === "FE" || code === "VA") return "skip";
 
   return SHEET_STATUS_CODES[code] ?? "pozo";
 }
