@@ -16,7 +16,7 @@ import {
  * Códigos usados en la hoja (leyenda de la fila 2):
  *   V = vacaciones · F = festivo · I = incapacidad · D = día · N = noche
  *   DE = descanso · L = licencia · B = base · OD = (sin definir)
- *   ED / EN / FE / GN / GD / BA = códigos operativos (sin definir)
+ *   ED / EN / FE / VA / GN / GD / BA = códigos operativos (sin definir)
  */
 
 export const MONTH_TABS = [
