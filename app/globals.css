@@ -15,14 +15,14 @@
   --border: oklch(0.855 0.015 80);
   --input: oklch(0.855 0.015 80);
   --ring: oklch(0.68 0.15 60);
-  --status-base: oklch(0.5 0.09 250);
-  --status-base-soft: oklch(0.95 0.03 250);
-  --status-pozo: oklch(0.66 0.16 55);
-  --status-pozo-soft: oklch(0.95 0.05 75);
-  --status-descanso: oklch(0.56 0.11 165);
-  --status-descanso-soft: oklch(0.95 0.04 165);
-  --status-licencia: oklch(0.52 0.08 305);
-  --status-licencia-soft: oklch(0.95 0.02 305);
+  --status-base: oklch(0.45 0.2 250);
+  --status-base-soft: oklch(0.9 0.1 250);
+  --status-pozo: oklch(0.55 0.3 55);
+  --status-pozo-soft: oklch(0.9 0.15 75);
+  --status-descanso: oklch(0.48 0.25 165);
+  --status-descanso-soft: oklch(0.88 0.12 165);
+  --status-licencia: oklch(0.47 0.25 305);
+  --status-licencia-soft: oklch(0.88 0.1 305);
 }
 
 @theme inline {
